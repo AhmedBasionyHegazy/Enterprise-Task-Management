@@ -117,7 +117,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         )}
 
         {/* Status & Priority Overview Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200">
           <div className="flex items-center gap-3">
             <div>
               <span className="text-xs text-slate-400 block mb-1">Priority</span>
@@ -130,7 +130,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
           </div>
 
           {/* Quick status update */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200">
             <span className="text-xs font-medium text-slate-600">Change Status:</span>
             <select
               value={currentStatus}

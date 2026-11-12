@@ -6,15 +6,14 @@ import { EmployeeFormModal } from '../components/employees/EmployeeFormModal';
 import { toast } from '../store/useToastStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { 
-  Users, 
   UserPlus, 
   Search, 
   Edit2, 
   Power, 
-  Shield, 
   CheckCircle2, 
   XCircle,
-  Briefcase
+  Briefcase,
+  Calendar
 } from 'lucide-react';
 
 export const EmployeesPage: React.FC = () => {
@@ -69,11 +68,11 @@ export const EmployeesPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Employee Directory & Access Management
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -86,7 +85,7 @@ export const EmployeesPage: React.FC = () => {
             setEmployeeToEdit(null);
             setIsModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
         >
           <UserPlus className="w-4 h-4" />
           <span>Add New Employee</span>
@@ -94,7 +93,7 @@ export const EmployeesPage: React.FC = () => {
       </div>
 
       {/* Filter / Search Bar */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-4">
+      <div className="p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -102,18 +101,114 @@ export const EmployeesPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, username, email, or department..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+            className="w-full pl-9 pr-4 py-2.5 sm:py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
           />
         </div>
 
-        <div className="text-xs text-slate-400 font-medium">
-          Total Staff: <span className="text-slate-800 font-semibold">{filteredUsers.length}</span>
+        <div className="text-xs text-slate-400 font-medium flex items-center justify-between sm:justify-end">
+          <span>Total Staff:</span>
+          <span className="text-slate-800 font-semibold ml-1.5">{filteredUsers.length}</span>
         </div>
       </div>
 
-      {/* Employees Table Card */}
+      {/* Employees Container */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 1. MOBILE CARD LIST VIEW (< 768px) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {isLoading ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <span>Loading employee directory...</span>
+              </div>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="py-12 px-4 text-center text-slate-400 text-xs">
+              No employees found matching the search criteria.
+            </div>
+          ) : (
+            filteredUsers.map((emp) => (
+              <div key={emp.id} className="p-4 space-y-3 hover:bg-slate-50/60 transition">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 text-indigo-700 font-bold flex items-center justify-center text-sm border border-slate-200 shrink-0">
+                      {emp.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-slate-900 truncate">{emp.fullName}</div>
+                      <div className="text-xs text-slate-400 truncate">
+                        @{emp.username} &bull; {emp.email}
+                      </div>
+                    </div>
+                  </div>
+                  <RoleBadge role={emp.roleName} size="sm" />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{emp.department || 'No Department'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <span>
+                      {new Date(emp.createdDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <div>
+                    {emp.isActive ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Active</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Deactivated</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setEmployeeToEdit(emp);
+                        setIsModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleStatus(emp)}
+                      disabled={emp.id === currentUser?.id}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-30 disabled:cursor-not-allowed ${
+                        emp.isActive
+                          ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                          : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                      }`}
+                    >
+                      <Power className="w-3.5 h-3.5" />
+                      <span>{emp.isActive ? 'Deactivate' : 'Activate'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 2. DESKTOP TABLE VIEW (>= 768px) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">

@@ -12,8 +12,6 @@ import {
   AlertCircle, 
   CheckCircle2, 
   ListTodo, 
-  TrendingUp, 
-  Users, 
   AlertTriangle,
   ArrowUpRight,
   ExternalLink
@@ -62,11 +60,11 @@ export const DashboardPage: React.FC = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-300">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             {isAdmin ? 'Executive Analytics & Task Overview' : 'My Workload & Performance Dashboard'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -76,7 +74,7 @@ export const DashboardPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <Link
             to="/tasks"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
           >
             <span>View Tasks List</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -85,7 +83,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Cards Row (Total, New, In Progress, Completed, Overdue) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           title="Total Tasks"
           value={stats.totalTasks}
@@ -129,8 +127,8 @@ export const DashboardPage: React.FC = () => {
 
       {/* Overdue Alert Banner if tasks are overdue */}
       {stats.overdueTasks > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-50 to-amber-50 border border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-50 to-amber-50 border border-rose-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-start sm:items-center gap-3">
             <div className="p-2.5 rounded-xl bg-rose-600 text-white shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -145,7 +143,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <Link
             to="/tasks?status=In+Progress"
-            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shrink-0 transition shadow-xs"
+            className="text-center px-3.5 py-2 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shrink-0 transition shadow-xs"
           >
             Review Overdue Tasks
           </Link>
@@ -153,9 +151,9 @@ export const DashboardPage: React.FC = () => {
       )}
 
       {/* Progress & Breakdown Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Priority Breakdown (5 cols) */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-800">Priority Distribution</h3>
@@ -202,21 +200,21 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Status Breakdown (7 cols) */}
-        <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="lg:col-span-7 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-800">Lifecycle Progress</h3>
             <span className="text-xs text-slate-400">Status Metrics</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-6">
             {stats.statusBreakdown.map((s) => (
               <div
                 key={s.label}
-                className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 text-center"
+                className="p-3 sm:p-4 rounded-xl border border-slate-100 bg-slate-50/60 text-center"
               >
-                <div className="text-xs text-slate-500 mb-1">{s.label}</div>
-                <div className="text-2xl font-bold text-slate-800">{s.count}</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{s.percentage}% of workload</div>
+                <div className="text-[11px] sm:text-xs text-slate-500 mb-1 truncate">{s.label}</div>
+                <div className="text-xl sm:text-2xl font-bold text-slate-800">{s.count}</div>
+                <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">{s.percentage}%</div>
               </div>
             ))}
           </div>
@@ -233,16 +231,16 @@ export const DashboardPage: React.FC = () => {
                   onClick={() => handleOpenTask(t)}
                   className="py-2.5 flex items-center justify-between hover:bg-slate-50 px-2 rounded-xl cursor-pointer transition"
                 >
-                  <div className="min-w-0 pr-4">
+                  <div className="min-w-0 pr-3">
                     <div className="text-xs font-semibold text-slate-800 truncate">{t.title}</div>
-                    <div className="text-[11px] text-slate-400">
-                      Due: {new Date(t.dueDate).toLocaleDateString()} &bull; Assigned to:{' '}
+                    <div className="text-[11px] text-slate-400 truncate">
+                      Due: {new Date(t.dueDate).toLocaleDateString()} &bull;{' '}
                       <span className="text-slate-600">{t.assignedToFullName}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge status={t.status} size="sm" />
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300 hidden xs:block" />
                   </div>
                 </div>
               ))}
@@ -251,23 +249,54 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Employee Workloads Table (Admin Only) */}
+      {/* Employee Workloads Section (Admin Only) */}
       {isAdmin && stats.employeeWorkloads.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-slate-800">Employee Workload & Capacity</h3>
               <p className="text-xs text-slate-400 mt-0.5">Distribution of tasks across active staff members</p>
             </div>
             <Link
               to="/employees"
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition"
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 shrink-0 transition"
             >
-              Manage Employees &rarr;
+              Manage &rarr;
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Workload Cards (< 768px) */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {stats.employeeWorkloads.map((emp) => (
+              <div key={emp.userId} className="p-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-xs text-slate-900">{emp.fullName}</div>
+                  <div className="text-[11px] text-slate-400">{emp.department}</div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <div className="text-[10px] text-slate-400">Assigned</div>
+                    <div className="text-xs font-bold text-slate-800 mt-0.5">{emp.assignedTasksCount}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-amber-50/60 border border-amber-100">
+                    <div className="text-[10px] text-amber-600">Pending</div>
+                    <div className="text-xs font-bold text-amber-700 mt-0.5">{emp.pendingTasksCount}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
+                    <div className="text-[10px] text-emerald-600">Done</div>
+                    <div className="text-xs font-bold text-emerald-700 mt-0.5">{emp.completedTasksCount}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-rose-50/60 border border-rose-100">
+                    <div className="text-[10px] text-rose-600">Overdue</div>
+                    <div className="text-xs font-bold text-rose-700 mt-0.5">{emp.overdueTasksCount}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Workload Table (>= 768px) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">

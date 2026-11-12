@@ -45,14 +45,14 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-3 sm:p-6 lg:p-8 font-sans overflow-x-hidden relative">
       {/* Background glowing orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden">
         {/* Left Side: Brand & Quick Demo Roles */}
-        <div className="lg:col-span-5 p-8 sm:p-10 bg-gradient-to-br from-indigo-900/60 to-slate-900/80 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col justify-between text-white">
+        <div className="lg:col-span-5 p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-indigo-900/60 to-slate-900/80 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col justify-between text-white">
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-glow-primary">
@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Right Side: Sign-In Form */}
-        <div className="lg:col-span-7 p-8 sm:p-10 bg-white flex flex-col justify-center">
+        <div className="lg:col-span-7 p-5 sm:p-8 lg:p-10 bg-white flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Sign in to your account</h2>

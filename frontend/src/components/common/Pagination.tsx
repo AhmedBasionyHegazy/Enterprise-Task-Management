@@ -38,13 +38,13 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border-t border-slate-200 sm:px-6">
-      {/* Summary */}
-      <div className="flex items-center gap-4 text-sm text-slate-500">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-4 py-3.5 bg-white border-t border-slate-200 sm:px-6">
+      {/* Summary & Rows per page */}
+      <div className="flex flex-wrap items-center justify-between sm:justify-start w-full sm:w-auto gap-3 text-xs sm:text-sm text-slate-500">
         <div>
           Showing <span className="font-semibold text-slate-800">{startItem}</span> to{' '}
           <span className="font-semibold text-slate-800">{endItem}</span> of{' '}
-          <span className="font-semibold text-slate-800">{totalCount}</span> results
+          <span className="font-semibold text-slate-800">{totalCount}</span>
         </div>
 
         {onPageSizeChange && (
@@ -64,59 +64,69 @@ export const Pagination: React.FC<PaginationProps> = ({
         )}
       </div>
 
-      {/* Buttons */}
-      <div className="flex items-center gap-1">
+      {/* Page Navigation Controls */}
+      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-1.5">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-2.5 sm:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
         >
           <ChevronLeft className="w-4 h-4" />
+          <span className="sm:hidden">Prev</span>
         </button>
 
-        {startPage > 1 && (
-          <>
-            <button
-              onClick={() => onPageChange(1)}
-              className="px-3 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
-            >
-              1
-            </button>
-            {startPage > 2 && <span className="px-1 text-slate-400">...</span>}
-          </>
-        )}
+        {/* Mobile page indicator */}
+        <span className="sm:hidden text-xs font-medium text-slate-600">
+          Page <strong className="text-slate-900">{currentPage}</strong> of <strong className="text-slate-900">{totalPages}</strong>
+        </span>
 
-        {pages.map((p) => (
-          <button
-            key={p}
-            onClick={() => onPageChange(p)}
-            className={`px-3 py-1 text-xs font-medium rounded-lg transition ${
-              p === currentPage
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
+        {/* Desktop page numbers */}
+        <div className="hidden sm:flex items-center gap-1">
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => onPageChange(1)}
+                className="px-3 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-1 text-slate-400">...</span>}
+            </>
+          )}
 
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <span className="px-1 text-slate-400">...</span>}
+          {pages.map((p) => (
             <button
-              onClick={() => onPageChange(totalPages)}
-              className="px-3 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition ${
+                p === currentPage
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
             >
-              {totalPages}
+              {p}
             </button>
-          </>
-        )}
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-1 text-slate-400">...</span>}
+              <button
+                onClick={() => onPageChange(totalPages)}
+                className="px-3 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+        </div>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-2.5 sm:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
         >
+          <span className="sm:hidden">Next</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

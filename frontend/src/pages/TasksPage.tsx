@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { taskService } from '../services/taskService';
 import { userService } from '../services/userService';
-import { TaskItem, User, TaskQueryParams, PaginatedResult } from '../types';
-import { PriorityBadge, StatusBadge } from '../components/common/Badge';
+import { TaskItem, User, TaskQueryParams } from '../types';
+import { PriorityBadge } from '../components/common/Badge';
 import { Pagination } from '../components/common/Pagination';
 import { Modal } from '../components/common/Modal';
 import { TaskFormModal } from '../components/tasks/TaskFormModal';
@@ -11,7 +11,6 @@ import { TaskDetailsModal } from '../components/tasks/TaskDetailsModal';
 import { toast } from '../store/useToastStore';
 import { 
   Search, 
-  Filter, 
   Plus, 
   Edit3, 
   Trash2, 
@@ -20,8 +19,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Calendar,
-  CheckCircle2,
-  Clock
+  User as UserIcon
 } from 'lucide-react';
 
 export const TasksPage: React.FC = () => {
@@ -155,11 +153,11 @@ export const TasksPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Top Header & New Task button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             {isAdmin ? 'Task Administration & Assignments' : 'My Assigned Tasks'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -175,7 +173,7 @@ export const TasksPage: React.FC = () => {
               setTaskToEdit(null);
               setIsFormModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Task</span>
@@ -184,10 +182,10 @@ export const TasksPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+      <div className="p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 sm:gap-3">
           {/* Search bar */}
-          <div className="lg:col-span-4 relative">
+          <div className="sm:col-span-2 lg:col-span-4 relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -196,7 +194,7 @@ export const TasksPage: React.FC = () => {
                 setQueryParams((prev) => ({ ...prev, search: e.target.value, pageNumber: 1 }))
               }
               placeholder="Search by title or description..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+              className="w-full pl-9 pr-4 py-2.5 sm:py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
             />
           </div>
 
@@ -212,7 +210,7 @@ export const TasksPage: React.FC = () => {
                     pageNumber: 1,
                   }))
                 }
-                className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+                className="w-full py-2.5 sm:py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
               >
                 <option value={0}>All Employees</option>
                 {employees.map((emp) => (
@@ -231,7 +229,7 @@ export const TasksPage: React.FC = () => {
               onChange={(e) =>
                 setQueryParams((prev) => ({ ...prev, status: e.target.value, pageNumber: 1 }))
               }
-              className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+              className="w-full py-2.5 sm:py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
             >
               <option value="All">All Statuses</option>
               <option value="New">New</option>
@@ -247,7 +245,7 @@ export const TasksPage: React.FC = () => {
               onChange={(e) =>
                 setQueryParams((prev) => ({ ...prev, priority: e.target.value, pageNumber: 1 }))
               }
-              className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+              className="w-full py-2.5 sm:py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
             >
               <option value="All">All Priorities</option>
               <option value="Low">Low</option>
@@ -256,22 +254,150 @@ export const TasksPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Reset Filters button */}
-          <div className="lg:col-span-1 flex items-center justify-end">
+          {/* Mobile Sort & Reset Controls */}
+          <div className={`flex items-center justify-between lg:justify-end gap-2 ${isAdmin ? 'sm:col-span-2 lg:col-span-1' : 'sm:col-span-2 lg:col-span-2'}`}>
+            <div className="flex md:hidden items-center gap-1.5 flex-1">
+              <select
+                value={queryParams.sortBy}
+                onChange={(e) => handleSort(e.target.value)}
+                className="flex-1 py-2.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-700"
+              >
+                <option value="DueDate">Sort: Due Date</option>
+                <option value="Priority">Sort: Priority</option>
+                <option value="Status">Sort: Status</option>
+                <option value="Title">Sort: Title</option>
+              </select>
+            </div>
             <button
               onClick={handleResetFilters}
               title="Reset Filters"
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="p-2.5 sm:p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 sm:border-transparent rounded-xl transition flex items-center gap-1.5 text-xs"
             >
               <RotateCcw className="w-4 h-4" />
+              <span className="md:hidden">Reset</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Tasks Table Card */}
+      {/* Tasks List Container */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 1. MOBILE CARD LIST VIEW (< 768px) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {isLoading ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <span>Loading records...</span>
+              </div>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="py-12 px-4 text-center text-slate-400 text-xs">
+              No tasks match the active filter criteria.
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <div key={task.id} className="p-4 space-y-3 hover:bg-slate-50/60 transition">
+                {/* Card Header: Title & Priority */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setIsDetailsModalOpen(true);
+                      }}
+                      className="font-semibold text-sm text-slate-900 hover:text-indigo-600 cursor-pointer leading-snug"
+                    >
+                      {task.title}
+                    </div>
+                    {task.description && (
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                        {task.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <PriorityBadge priority={task.priority} size="sm" />
+                    {task.isOverdue && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-rose-100 text-rose-700 border border-rose-200">
+                        Overdue
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Meta Row: Due Date & Assignee */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-1">
+                  <div className={`flex items-center gap-1.5 ${task.isOverdue ? 'text-rose-600 font-semibold' : ''}`}>
+                    <Calendar className="w-3.5 h-3.5 opacity-75" />
+                    <span>Due: {formatDate(task.dueDate)}</span>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+                      <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{task.assignedToFullName}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Controls Row: Status Select & Action Buttons */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <select
+                    value={task.status}
+                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-2.5 focus:ring-1 focus:ring-indigo-500 focus:outline-hidden"
+                  >
+                    <option value="New">New</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setIsDetailsModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>{task.commentsCount}</span>
+                      <span className="ml-0.5">Details</span>
+                    </button>
+
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setTaskToEdit(task);
+                            setIsFormModalOpen(true);
+                          }}
+                          title="Edit Task"
+                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskToDelete(task);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          title="Delete Task"
+                          className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 2. DESKTOP TABLE VIEW (>= 768px) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">
@@ -520,11 +646,11 @@ export const TasksPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
+                className="px-4 py-2.5 sm:py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 sm:border-transparent transition"
               >
                 Cancel
               </button>
@@ -532,7 +658,7 @@ export const TasksPage: React.FC = () => {
                 type="button"
                 onClick={confirmDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition shadow-xs"
+                className="px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition shadow-xs"
               >
                 {isDeleting ? 'Deleting...' : 'Delete Task'}
               </button>
