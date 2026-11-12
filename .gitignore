@@ -1,0 +1,51 @@
+# ==============================================================================
+# Enterprise Task Management - .gitignore
+# ==============================================================================
+
+# .NET / C# Build Outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.ide
+*.pfx
+*.publishsettings
+
+# Visual Studio & VS Code Cache
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.DotSettings.user
+_ReSharper*/
+
+# Node & Frontend Build Artifacts
+**/node_modules/
+**/dist/
+**/build/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+
+# Environment & Local Configuration Overrides
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+appsettings.Development.json
+appsettings.Local.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini

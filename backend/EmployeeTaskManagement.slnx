@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EmployeeTaskManagement.API/EmployeeTaskManagement.API.csproj" />
+    <Project Path="src/EmployeeTaskManagement.Application/EmployeeTaskManagement.Application.csproj" />
+    <Project Path="src/EmployeeTaskManagement.Core/EmployeeTaskManagement.Core.csproj" />
+    <Project Path="src/EmployeeTaskManagement.Infrastructure/EmployeeTaskManagement.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EmployeeTaskManagement.Tests/EmployeeTaskManagement.Tests.csproj" />
+  </Folder>
+</Solution>
