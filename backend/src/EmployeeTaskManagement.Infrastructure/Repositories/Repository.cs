@@ -62,16 +62,21 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
             return _mapper.Map<TDto>(entity);
         }
 
+
         public bool Remove(TDto entityDto)
         {
             try
             {
                 if (entityDto == null)
-                {
                     return false;
-                }
+
                 T entity = _mapper.Map<T>(entityDto);
-                dbSet.Remove(entity);
+
+                var entityEntry = dbSet.Attach(entity);
+
+                entityEntry.Property("IsDeleted").CurrentValue = true;
+                entityEntry.Property("IsDeleted").IsModified = true;
+
                 return true;
             }
             catch (Exception)
@@ -84,8 +89,19 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
         {
             try
             {
-                IEnumerable<T> entities = _mapper.Map<IEnumerable<T>>(entityDtos);
-                dbSet.RemoveRange(entities);
+                if (entityDtos == null)
+                    return false;
+
+                var entities = _mapper.Map<IEnumerable<T>>(entityDtos);
+
+                foreach (var entity in entities)
+                {
+                    var entry = dbSet.Attach(entity);
+
+                    entry.Property("IsDeleted").CurrentValue = true;
+                    entry.Property("IsDeleted").IsModified = true;
+                }
+
                 return true;
             }
             catch (Exception)
@@ -93,6 +109,7 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
                 return false;
             }
         }
+
 
         public TDto Update(TDto entityDto)
         {

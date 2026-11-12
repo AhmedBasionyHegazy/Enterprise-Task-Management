@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace EmployeeTaskManagement.Core.Entities
 {
-    public class TaskEntity
+    public class TaskEntity : IEntity
     {
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
@@ -14,8 +14,12 @@ namespace EmployeeTaskManagement.Core.Entities
         public DateTime DueDate { get; set; }
         public int AssignedToUserId { get; set; }
         public int CreatedByUserId { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+        public DateTime CreatedDate { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedDate { get; set; }
+        public string? ModifiedBy { get; set; }
+        public bool IsDeleted { get; set; }
 
         // Navigation properties
         public virtual User? AssignedToUser { get; set; }

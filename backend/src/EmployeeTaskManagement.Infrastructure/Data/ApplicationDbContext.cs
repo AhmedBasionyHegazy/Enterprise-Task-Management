@@ -1,18 +1,88 @@
 using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.Core.Entities;
+using EmployeeTaskManagement.Application.Services;
+using System.Linq.Expressions;
 
 namespace EmployeeTaskManagement.Infrastructure.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        public string user;
+        private readonly UserResolverService _userResolverService;
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, UserResolverService userResolverService) : base(options)
         {
+            _userResolverService = userResolverService;
+            user = _userResolverService.GetUser();
         }
 
         public virtual DbSet<Role> Roles { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
         public virtual DbSet<TaskEntity> Tasks { get; set; } = null!;
         public virtual DbSet<TaskComment> TaskComments { get; set; } = null!;
+
+        public override int SaveChanges()
+        {
+            ApplyAuditAndSoftDelete();
+
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            ApplyAuditAndSoftDelete();
+
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            ApplyAuditAndSoftDelete();
+
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ApplyAuditAndSoftDelete();
+
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void ApplyAuditAndSoftDelete()
+        {
+            var now = DateTime.Now;
+
+            foreach (var entry in ChangeTracker.Entries<IEntity>().ToList())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedDate = now;
+                        entry.Entity.CreatedBy = user;
+                        entry.Entity.IsDeleted = false;
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Property(x => x.CreatedBy).IsModified = false;
+                        entry.Property(x => x.CreatedDate).IsModified = false;
+
+                        entry.Entity.ModifiedDate = now;
+                        entry.Entity.ModifiedBy = user;
+                        break;
+
+                    case EntityState.Deleted:
+                        entry.State = EntityState.Modified;
+
+                        entry.Property(x => x.CreatedBy).IsModified = false;
+                        entry.Property(x => x.CreatedDate).IsModified = false;
+
+                        entry.Entity.IsDeleted = true;
+                        entry.Entity.ModifiedDate = now;
+                        entry.Entity.ModifiedBy = user;
+                        break;
+                }
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -302,6 +372,58 @@ namespace EmployeeTaskManagement.Infrastructure.Data
                     CreatedDate = new DateTime(2026, 1, 5, 16, 0, 0, DateTimeKind.Utc)
                 }
             );
+
+
+
+            // ================================================================
+            // GLOBAL SOFT DELETE QUERY FILTERS
+            // Automatically exclude deleted records from all normal queries.
+            // ================================================================
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                // Skip derived entity types because EF Core query filters
+                // must be configured on the inheritance root.
+                if (entityType.BaseType != null)
+                    continue;
+
+                // Find the IsDeleted property dynamically.
+                var isDeletedProperty = entityType.FindProperty("IsDeleted");
+
+                // Apply filter only to entities with a Boolean IsDeleted property.
+                if (isDeletedProperty == null ||
+                    isDeletedProperty.ClrType != typeof(bool))
+                {
+                    continue;
+                }
+
+                // Build: entity => EF.Property<bool>(entity, "IsDeleted") == false
+                var parameter = Expression.Parameter(
+                    entityType.ClrType, "entity");
+
+                var propertyAccess = Expression.Call(
+                    typeof(EF),
+                    nameof(EF.Property),
+                    new[] { typeof(bool) },
+                    parameter,
+                    Expression.Constant("IsDeleted"));
+
+                var filterExpression = Expression.Lambda(
+                    Expression.Equal(
+                        propertyAccess,
+                        Expression.Constant(false)),
+                    parameter);
+
+                // Apply global query filter.
+                modelBuilder.Entity(entityType.ClrType)
+                    .HasQueryFilter(filterExpression);
+
+                // Ensure new records default to active.
+                modelBuilder.Entity(entityType.ClrType)
+                    .Property<bool>("IsDeleted")
+                    .HasDefaultValue(false);
+            }
+
         }
     }
 }

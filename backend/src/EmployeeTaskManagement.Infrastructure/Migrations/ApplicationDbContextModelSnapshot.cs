@@ -30,6 +30,10 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -38,6 +42,14 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -58,15 +70,19 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "System Administrator with full access to manage employees and all tasks",
+                            IsDeleted = false,
                             Name = "Admin"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Standard team member who can view assigned tasks, update progress, and post comments",
+                            IsDeleted = false,
                             Name = "Employee"
                         });
                 });
@@ -83,10 +99,22 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -110,7 +138,9 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 1,
                             Comment = "Completed initial implementation with symmetric key signing and claim validation.",
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 15, 10, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             TaskId = 1,
                             UserId = 2
                         },
@@ -118,7 +148,9 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 2,
                             Comment = "Verified token payload and expiry handling. Approved.",
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 20, 14, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             TaskId = 1,
                             UserId = 1
                         },
@@ -126,7 +158,9 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 3,
                             Comment = "Added status card summaries and color-coded priority badges.",
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 2, 2, 11, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             TaskId = 2,
                             UserId = 2
                         },
@@ -134,7 +168,9 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 4,
                             Comment = "Encountered missing foreign keys in legacy export. Working on reconciliation script.",
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 5, 16, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             TaskId = 5,
                             UserId = 2
                         });
@@ -151,6 +187,10 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                     b.Property<int>("AssignedToUserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("int");
 
@@ -164,6 +204,14 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -199,10 +247,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 1,
                             AssignedToUserId = 2,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 1, 10, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Design and implement secure JWT authentication flow with role claims for Admin and Employee roles.",
                             DueDate = new DateTime(2026, 1, 25, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "High",
                             StartDate = new DateTime(2026, 1, 10, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "Completed",
@@ -212,10 +262,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 2,
                             AssignedToUserId = 2,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 2, 1, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Develop real-time dashboard displaying task KPI counts, overdue alerts, and workload distribution charts.",
                             DueDate = new DateTime(2026, 12, 1, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "High",
                             StartDate = new DateTime(2026, 2, 1, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "In Progress",
@@ -225,10 +277,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 3,
                             AssignedToUserId = 4,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 2, 5, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Review query execution plans for Tasks and Comments tables. Add non-clustered composite indexes for high-frequency filters.",
                             DueDate = new DateTime(2026, 12, 15, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "Medium",
                             StartDate = new DateTime(2026, 2, 5, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "In Progress",
@@ -238,10 +292,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 4,
                             AssignedToUserId = 3,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 2, 10, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Conduct internal vulnerability scan across all exposed API endpoints, CORS policies, and SQL injection protections.",
                             DueDate = new DateTime(2026, 12, 20, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "High",
                             StartDate = new DateTime(2026, 2, 10, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "New",
@@ -251,10 +307,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 5,
                             AssignedToUserId = 2,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2025, 12, 1, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Write and verify migration script for historical employee task logs. (Overdue item for testing overdue dashboard logic).",
                             DueDate = new DateTime(2026, 1, 15, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "High",
                             StartDate = new DateTime(2025, 12, 1, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "In Progress",
@@ -264,10 +322,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 6,
                             AssignedToUserId = 4,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 2, 15, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Implement client-based rate limiting on public authentication endpoints to prevent brute-force attacks.",
                             DueDate = new DateTime(2026, 12, 28, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "Medium",
                             StartDate = new DateTime(2026, 2, 15, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "New",
@@ -277,10 +337,12 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         {
                             Id = 7,
                             AssignedToUserId = 3,
+                            CreatedBy = "",
                             CreatedByUserId = 1,
                             CreatedDate = new DateTime(2026, 2, 18, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Perform regression testing across Chrome, Edge, Firefox, Safari and mobile viewpoints for responsive layout compliance.",
                             DueDate = new DateTime(2026, 12, 31, 18, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
                             Priority = "Low",
                             StartDate = new DateTime(2026, 2, 18, 9, 0, 0, 0, DateTimeKind.Utc),
                             Status = "New",
@@ -295,6 +357,10 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .ValueGeneratedOnAdd()
@@ -319,6 +385,14 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -352,11 +426,13 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Department = "Executive IT",
                             Email = "admin@taskflow.com",
                             FullName = "Sarah Jenkins (System Admin)",
                             IsActive = true,
+                            IsDeleted = false,
                             PasswordHash = "$2a$11$o3hK3r3B0v8y9x5c4d3e2u8r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9",
                             RoleId = 1,
                             Username = "admin"
@@ -364,11 +440,13 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Department = "Full-Stack Engineering",
                             Email = "john.doe@taskflow.com",
                             FullName = "John Doe",
                             IsActive = true,
+                            IsDeleted = false,
                             PasswordHash = "$2a$11$o3hK3r3B0v8y9x5c4d3e2u8r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9",
                             RoleId = 2,
                             Username = "john.doe"
@@ -376,11 +454,13 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 3,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Department = "Quality Assurance & Testing",
                             Email = "jane.smith@taskflow.com",
                             FullName = "Jane Smith",
                             IsActive = true,
+                            IsDeleted = false,
                             PasswordHash = "$2a$11$o3hK3r3B0v8y9x5c4d3e2u8r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9",
                             RoleId = 2,
                             Username = "jane.smith"
@@ -388,11 +468,13 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Department = "DevOps & Infrastructure",
                             Email = "alex.jones@taskflow.com",
                             FullName = "Alex Jones",
                             IsActive = true,
+                            IsDeleted = false,
                             PasswordHash = "$2a$11$o3hK3r3B0v8y9x5c4d3e2u8r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9",
                             RoleId = 2,
                             Username = "alex.jones"
@@ -400,11 +482,13 @@ namespace EmployeeTaskManagement.Infrastructure.Migrations
                         new
                         {
                             Id = 5,
+                            CreatedBy = "",
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Department = "Product Design & UX",
                             Email = "michael.brown@taskflow.com",
                             FullName = "Michael Brown",
                             IsActive = false,
+                            IsDeleted = false,
                             PasswordHash = "$2a$11$o3hK3r3B0v8y9x5c4d3e2u8r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9",
                             RoleId = 2,
                             Username = "michael.brown"
