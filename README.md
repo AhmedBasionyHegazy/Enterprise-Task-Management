@@ -16,31 +16,38 @@ Enterprise-grade full-stack solution for employee task lifecycle management, arc
 The repository consolidates backend, frontend, database scripts, and migrations into a single monorepo:
 
 ```
-Enterprise Task Management/
-├── backend/                                   # .NET 10 Clean Architecture Solution
-│   ├── EmployeeTaskManagement.slnx            # Solution File
-│   ├── src/
-│   │   ├── EmployeeTaskManagement.Core/       # Domain Entities, Enums, Constants
-│   │   ├── EmployeeTaskManagement.Application/# DTOs, MappingProfile, FluentValidation, Service Interfaces
-│   │   ├── EmployeeTaskManagement.Infrastructure/ # EF Core, Dynamic Repository, UnitOfWork, Migrations
-│   │   │   └── Migrations/                    # EF Core Migrations with Seed Data
-│   │   └── EmployeeTaskManagement.API/        # RESTful Controllers, JWT Middleware, Swagger OpenAPI 3.0
-│   └── tests/
-│       └── EmployeeTaskManagement.Tests/      # xUnit Integration and Business Rule Test Suite
-├── frontend/                                  # React 19 + TypeScript + Vite SPA
-│   ├── src/
-│   │   ├── types/                             # TypeScript Contracts & DTOs
-│   │   ├── services/                          # Axios API client with JWT interceptor
-│   │   ├── store/                             # Zustand State Stores (Auth, Toast notifications)
-│   │   ├── components/                        # UI Components (Modals, Badges, StatCards, Pagination)
-│   │   └── pages/                             # LoginPage, DashboardPage, TasksPage, EmployeesPage
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.ts
+Enterprise Task Management/                          <-- Unified Git Monorepo (branch: main)
+├── .gitignore                                       # Comprehensive ignore rules (.NET, Node, VS, VS Code)
+├── README.md                                        # Architecture, Setup & API Documentation
+├── Task.docx                                        # Original Requirements Specification
 ├── Database/
-│   └── Database_Schema_And_Seed.sql           # SQL Server Schema & Seed Script (Database-First)
-├── .gitignore                                 # Git configuration for .NET, React, and IDEs
-└── README.md                                  # Complete Engineering Documentation & Setup Guide
+│   └── Database_Schema_And_Seed.sql                 # SQL Server Schema & Seed Script (Database-First)
+├── backend/                                         # .NET 10 Clean Architecture Solution
+│   ├── EmployeeTaskManagement.slnx                  # Solution File
+│   ├── src/
+│   │   ├── EmployeeTaskManagement.Core/             # Domain Entities (Role, User, Task, Comment), Enums
+│   │   ├── EmployeeTaskManagement.Application/      # DTOs, MappingProfile, Validators, Service Interfaces
+│   │   ├── EmployeeTaskManagement.Infrastructure/   # Dynamic Repository, UnitOfWork, Migrations & Seeds
+│   │   │   ├── Data/
+│   │   │   │   ├── ApplicationDbContext.cs          # EF Core DbContext with HasData Seed Configuration
+│   │   │   │   └── ApplicationDbContextFactory.cs   # IDesignTimeDbContextFactory for PMC Update-Database
+│   │   │   └── Migrations/                          # EF Core Migrations Directory
+│   │   │       ├── 20261112075033_InitialCreate.cs  # Schema creation + automatic seed data insertion
+│   │   │       ├── 20261112075033_InitialCreate.Designer.cs
+│   │   │       └── ApplicationDbContextModelSnapshot.cs
+│   │   └── EmployeeTaskManagement.API/              # Controllers, JWT Middleware, Swagger OpenAPI 3.0
+│   └── tests/
+│       └── EmployeeTaskManagement.Tests/            # xUnit Test Suite
+└── frontend/                                        # React 19 + TypeScript + Vite SPA
+    ├── src/
+    │   ├── types/                                   # TypeScript Contracts & DTOs
+    │   ├── services/                                # Axios API Client with JWT interceptors
+    │   ├── store/                                   # Zustand State Stores (Auth, Toast notifications)
+    │   ├── components/                              # UI Library (Modals, Badges, StatCards, Pagination)
+    │   └── pages/                                   # LoginPage, DashboardPage, TasksPage, EmployeesPage
+    ├── package.json
+    ├── tailwind.config.js
+    └── vite.config.ts
 ```
 
 ---
@@ -84,46 +91,60 @@ public interface IUnitOfWork : IDisposable
 
 ---
 
-## 3. Database Setup: Migrations & Seed Data
+## 3. Database Setup: `Update-Database` & Automatic Seed Data
 
-The database can be provisioned in **three seamless ways**:
+The database uses **Entity Framework Core 10 Migrations** configured with **seed data**. When you execute `Update-Database`, EF Core constructs all database tables, foreign key constraints, and non-clustered performance indexes, and **automatically seeds all roles, initial users, realistic tasks, and task comments** into the database!
 
-### Option A: Visual Studio Package Manager Console (PMC)
-1. Open the solution in **Visual Studio**.
-2. Open **Tools -> NuGet Package Manager -> Package Manager Console**.
-3. Set **Default project** to `EmployeeTaskManagement.Infrastructure`.
+### Method 1: Visual Studio Package Manager Console (PMC) — Recommended
+1. Open `backend\EmployeeTaskManagement.slnx` in **Visual Studio**.
+2. Open **Tools** -> **NuGet Package Manager** -> **Package Manager Console**.
+3. In the console dropdown, ensure:
+   - **Default project**: `EmployeeTaskManagement.Infrastructure`
 4. Run the command:
    ```powershell
    Update-Database
    ```
-   *EF Core applies the migration and immediately populates the database with roles, users, tasks, and task comments.*
+5. **Output**:
+   ```
+   Applying migration '20261112075033_InitialCreate'.
+   Done.
+   ```
+   *The database `EmployeeTaskDb` is now completely initialized and populated with all seed data.*
 
 ---
 
-### Option B: .NET CLI Migrations
-Open terminal in the project root:
+### Method 2: .NET CLI Migrations
+Open terminal in the `Enterprise Task Management` root folder:
 ```powershell
 dotnet ef database update --project "backend\src\EmployeeTaskManagement.Infrastructure" --startup-project "backend\src\EmployeeTaskManagement.API"
 ```
 
 ---
 
-### Option C: Automatic Migration on API Startup
-When you run the Web API project (`dotnet run`), the application automatically checks and applies any pending migrations and seeds upon launch.
+### Method 3: Automatic Migration on API Startup
+When you run the Web API project (`dotnet run`), the application automatically checks the database on startup and applies any pending migrations and seed data without requiring manual intervention:
+```csharp
+// Program.cs
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
+}
+```
 
 ---
 
-### Option D: Direct SQL Script (Database-First)
-You can also run the provided SQL script directly against SQL Server:
+### Method 4: Direct SQL Script (Database-First Alternative)
+You can also run the provided SQL script directly against SQL Server using `sqlcmd`:
 ```powershell
 sqlcmd -S . -i Database\Database_Schema_And_Seed.sql
 ```
 
 ---
 
-## 4. Default Login Credentials
+## 4. Default Seed Accounts & Fast Login
 
-The database is seeded with the following accounts. The login screen also features **1-Click Quick Login** buttons for instant reviewer testing:
+The database is seeded with the following accounts. The web login interface also includes **1-Click Quick Login** buttons for instant reviewer testing:
 
 | Role | Username | Password | Full Name / Description |
 | :--- | :--- | :--- | :--- |
@@ -131,7 +152,7 @@ The database is seeded with the following accounts. The login screen also featur
 | **Employee** | `john.doe` | `Employee@123` | John Doe (Senior Software Engineer) |
 | **Employee** | `jane.smith` | `Employee@123` | Jane Smith (Lead QA Specialist) |
 | **Employee** | `alex.jones` | `Employee@123` | Alex Jones (DevOps Engineer) |
-| **Employee (Inactive)** | `michael.brown` | `Employee@123` | Michael Brown *(Deactivated: used to test login blockage)* |
+| **Employee (Inactive)** | `michael.brown` | `Employee@123` | Michael Brown *(Deactivated: used to verify authentication blockage)* |
 
 ---
 
@@ -142,7 +163,10 @@ The database is seeded with the following accounts. The login screen also featur
 - **Node.js** (v18+) & **npm**
 - **Microsoft SQL Server** (Local instance `Server=.` or `Server=localhost`)
 
-### Step 1: Run the Backend Web API
+### Step 1: Initialize Database
+Run `Update-Database` via Visual Studio PMC (Method 1) or CLI (Method 2).
+
+### Step 2: Run the Backend Web API
 ```powershell
 cd backend
 dotnet run --project "src\EmployeeTaskManagement.API\EmployeeTaskManagement.API.csproj" --urls "http://localhost:5000"
@@ -150,7 +174,7 @@ dotnet run --project "src\EmployeeTaskManagement.API\EmployeeTaskManagement.API.
 - **API Base**: `http://localhost:5000/api`
 - **Swagger Documentation**: `http://localhost:5000/swagger`
 
-### Step 2: Run the React 19 Frontend
+### Step 3: Run the React 19 Frontend
 Open a separate terminal:
 ```powershell
 cd frontend
