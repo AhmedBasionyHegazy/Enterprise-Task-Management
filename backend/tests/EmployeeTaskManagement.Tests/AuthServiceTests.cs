@@ -2,11 +2,13 @@ using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using EmployeeTaskManagement.Application.DTOs.Auth;
+using EmployeeTaskManagement.Application.Interfaces.Audit;
 using EmployeeTaskManagement.Application.Interfaces.Persistence;
 using EmployeeTaskManagement.Application.Interfaces.Security;
 using EmployeeTaskManagement.Application.Mappings;
 using EmployeeTaskManagement.Application.Services;
 using EmployeeTaskManagement.Core.Entities;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
 using System.Threading.Tasks;
@@ -38,7 +40,9 @@ namespace EmployeeTaskManagement.Tests
                 _mockUow.Object,
                 _mockPasswordHasher.Object,
                 _mockJwtGenerator.Object,
-                _mapper
+                _mapper,
+                Mock.Of<IAuditService>(),
+                NullLogger<AuthService>.Instance
             );
         }
 

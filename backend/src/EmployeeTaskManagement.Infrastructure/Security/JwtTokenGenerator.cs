@@ -24,7 +24,7 @@ namespace EmployeeTaskManagement.Infrastructure.Security
             var jwtSecret = _configuration["Jwt:Key"] ?? "TaskFlow_Ultra_Secure_Secret_Key_For_JWT_Authentication_2026_Enterprise_Grade!";
             var issuer = _configuration["Jwt:Issuer"] ?? "EmployeeTaskManagementAPI";
             var audience = _configuration["Jwt:Audience"] ?? "EmployeeTaskManagementClient";
-            var expiryMinutes = int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var exp) ? exp : 480;
+            var expiryMinutes = int.TryParse(_configuration["Jwt:AccessTokenMinutes"], out var exp) && exp > 0 ? exp : 15;
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
