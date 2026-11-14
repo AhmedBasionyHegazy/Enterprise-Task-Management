@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EmployeeTaskManagement.Application.DTOs.Audit;
 using EmployeeTaskManagement.Application.DTOs.Comments;
 using EmployeeTaskManagement.Application.DTOs.Tasks;
 using EmployeeTaskManagement.Application.Services;
@@ -77,6 +78,16 @@ namespace EmployeeTaskManagement.API.Controllers
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] TaskStatusUpdateDto request)
         {
             var result = await _taskService.UpdateTaskStatusAsync(id, request.Status, CurrentUserId, CurrentUserRole);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+            return Ok(result);
+        }
+        [HttpGet("{id}/history")]
+        public async Task<IActionResult> GetHistory(int id, [FromQuery] AuditQueryParameters query)
+        {
+            var result = await _taskService.GetTaskHistoryAsync(id, query, CurrentUserId, CurrentUserRole);
             if (!result.Success)
             {
                 return StatusCode(result.StatusCode, result);
