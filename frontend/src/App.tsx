@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TasksPage } from './pages/TasksPage';
 import { EmployeesPage } from './pages/EmployeesPage';
+import { AuditPage } from './pages/AuditPage';
 
 export const App: React.FC = () => {
   const { isAuthenticated, checkAuth } = useAuthStore();
@@ -18,13 +19,11 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Login Route */}
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
         />
 
-        {/* Protected App Routes */}
         <Route
           path="/"
           element={
@@ -43,9 +42,16 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="audit"
+            element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AuditPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
-        {/* Catch all fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

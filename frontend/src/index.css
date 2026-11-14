@@ -9,18 +9,43 @@
   color-scheme: light;
 }
 
-body {
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  overflow-x: clip;
+}
+
+body {
+  min-height: 100dvh;
   background-color: #f8fafc;
   color: #0f172a;
 }
 
 /* Custom sleek scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
+}
+
+/* On mobile/tablet (<1024px), keep scrollbars overlay/hidden so Edge/Chrome fits full 100% edge-to-edge without a right gutter */
+@media (max-width: 1023px) {
+  html,
+  body,
+  main {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  main::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 ::-webkit-scrollbar-track {

@@ -105,7 +105,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
   expiresAt: string;
   user: User;
 }
