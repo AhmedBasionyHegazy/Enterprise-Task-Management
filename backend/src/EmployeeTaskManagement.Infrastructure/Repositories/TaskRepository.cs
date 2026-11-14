@@ -45,7 +45,8 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
             // 2. Search filtering
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                var term = query.Search.Trim().ToLower();
+                var trimmed = query.Search.Trim();
+                var term = (trimmed.Length > 200 ? trimmed[..200] : trimmed).ToLower();
                 tasksQuery = tasksQuery.Where(t => t.Title.ToLower().Contains(term) || (t.Description != null && t.Description.ToLower().Contains(term)));
             }
 
@@ -83,8 +84,8 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
             };
 
             // 7. Pagination
-            int pageNumber = query.PageNumber > 0 ? query.PageNumber : 1;
-            int pageSize = query.PageSize > 0 ? query.PageSize : 10;
+            int pageNumber = Math.Max(1, query.PageNumber);
+            int pageSize = query.PageSize > 0 ? Math.Min(query.PageSize, 100) : 10;
             var pagedEntities = await tasksQuery
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)

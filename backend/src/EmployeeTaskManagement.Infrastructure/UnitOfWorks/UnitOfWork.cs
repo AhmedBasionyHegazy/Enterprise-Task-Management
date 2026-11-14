@@ -20,6 +20,8 @@ namespace EmployeeTaskManagement.Infrastructure.UnitOfWorks
         public ITaskRepository Tasks { get; private set; }
         public ITaskCommentRepository TaskComments { get; private set; }
         public IRoleRepository Roles { get; private set; }
+        public IAuditLogRepository AuditLogs { get; private set; }
+        public INotificationRepository Notifications { get; private set; }
 
         public UnitOfWork(ApplicationDbContext context, IMapper mapper)
         {
@@ -30,6 +32,8 @@ namespace EmployeeTaskManagement.Infrastructure.UnitOfWorks
             Tasks = new TaskRepository(_context, _mapper);
             TaskComments = new TaskCommentRepository(_context, _mapper);
             Roles = new RoleRepository(_context, _mapper);
+            AuditLogs = new AuditLogRepository(_context);
+            Notifications = new NotificationRepository(_context);
         }
 
         public IRepository<ApplicationDbContext, T, TDto> GetRepository<T, TDto>() 

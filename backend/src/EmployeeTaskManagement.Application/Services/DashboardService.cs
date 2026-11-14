@@ -2,8 +2,8 @@ using AutoMapper;
 using EmployeeTaskManagement.Application.Common;
 using EmployeeTaskManagement.Application.DTOs.Dashboard;
 using EmployeeTaskManagement.Application.DTOs.Tasks;
+using EmployeeTaskManagement.Application.Interfaces.Caching;
 using EmployeeTaskManagement.Application.Interfaces.Persistence;
-using EmployeeTaskManagement.Core.Entities;
 using EmployeeTaskManagement.Core.Enums;
 using System;
 using System.Collections.Generic;
@@ -21,27 +21,38 @@ namespace EmployeeTaskManagement.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ICacheService _cache;
 
-        public DashboardService(IUnitOfWork unitOfWork, IMapper mapper)
+        public DashboardService(IUnitOfWork unitOfWork, IMapper mapper, ICacheService cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public async Task<ApiResponse<DashboardSummaryDto>> GetDashboardSummaryAsync(int currentUserId, string currentUserRole)
         {
+            var dashVersion = await _cache.GetVersionAsync(CacheScopes.Dashboard);
+            var usersVersion = await _cache.GetVersionAsync(CacheScopes.Users);
+            // Keyed per role and user id so an employee can never read cached admin metrics.
+            var key = $"dashboard:v{dashVersion}:u{usersVersion}:{currentUserRole}:{currentUserId}";
+
+            var summary = await _cache.GetOrCreateAsync(
+                key,
+                _ => BuildSummaryAsync(currentUserId, currentUserRole),
+                TimeSpan.FromSeconds(60));
+
+            return ApiResponse<DashboardSummaryDto>.Ok(summary);
+        }
+
+        private async Task<DashboardSummaryDto> BuildSummaryAsync(int currentUserId, string currentUserRole)
+        {
             var now = DateTime.UtcNow;
 
             // Fetch tasks based on role
-            IEnumerable<TaskDto> allTasks;
-            if (currentUserRole == RoleNames.Employee)
-            {
-                allTasks = await _unitOfWork.Tasks.GetAllTaskDtosAsync(t => t.AssignedToUserId == currentUserId);
-            }
-            else
-            {
-                allTasks = await _unitOfWork.Tasks.GetAllTaskDtosAsync();
-            }
+            IEnumerable<TaskDto> allTasks = currentUserRole == RoleNames.Employee
+                ? await _unitOfWork.Tasks.GetAllTaskDtosAsync(t => t.AssignedToUserId == currentUserId)
+                : await _unitOfWork.Tasks.GetAllTaskDtosAsync();
 
             var taskList = allTasks.ToList();
 
@@ -78,7 +89,7 @@ namespace EmployeeTaskManagement.Application.Services
             }).ToList();
 
             // Employee Workloads
-            var employees = await _unitOfWork.Users.GetEmployeesAsync();
+            var employees = (await _unitOfWork.Users.GetEmployeesAsync()).ToList();
             var employeeWorkloads = new List<EmployeeWorkloadDto>();
 
             if (currentUserRole == RoleNames.Admin)
@@ -112,14 +123,14 @@ namespace EmployeeTaskManagement.Application.Services
                 .Take(5)
                 .ToList();
 
-            var summary = new DashboardSummaryDto
+            return new DashboardSummaryDto
             {
                 TotalTasks = totalTasks,
                 NewTasks = newTasks,
                 InProgressTasks = inProgressTasks,
                 CompletedTasks = completedTasks,
                 OverdueTasks = overdueTasks,
-                TotalEmployees = employees.Count(),
+                TotalEmployees = employees.Count,
                 ActiveEmployees = employees.Count(e => e.IsActive),
                 PriorityBreakdown = priorityBreakdown,
                 StatusBreakdown = statusBreakdown,
@@ -127,8 +138,6 @@ namespace EmployeeTaskManagement.Application.Services
                 RecentTasks = recentTasks,
                 OverdueTaskList = overdueTaskList
             };
-
-            return ApiResponse<DashboardSummaryDto>.Ok(summary);
         }
     }
 }

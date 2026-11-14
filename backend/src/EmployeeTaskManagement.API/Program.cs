@@ -3,18 +3,31 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using EmployeeTaskManagement.API.BackgroundServices;
+using EmployeeTaskManagement.API.Hubs;
+using EmployeeTaskManagement.API.Logging;
 using EmployeeTaskManagement.API.Middlewares;
+using EmployeeTaskManagement.API.Security;
+using EmployeeTaskManagement.API.Services;
+using EmployeeTaskManagement.Application.Common;
+using EmployeeTaskManagement.Application.Interfaces.Audit;
+using EmployeeTaskManagement.Application.Interfaces.Caching;
+using EmployeeTaskManagement.Application.Interfaces.Notifications;
 using EmployeeTaskManagement.Application.Interfaces.Persistence;
 using EmployeeTaskManagement.Application.Interfaces.Security;
 using EmployeeTaskManagement.Application.Mappings;
 using EmployeeTaskManagement.Application.Services;
+using EmployeeTaskManagement.Infrastructure.Caching;
 using EmployeeTaskManagement.Infrastructure.Data;
 using EmployeeTaskManagement.Infrastructure.Security;
 using EmployeeTaskManagement.Infrastructure.UnitOfWorks;
 using FluentValidation;
+using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddFileLogger(builder.Configuration, builder.Environment.ContentRootPath);
 
 // 1. HTTP Context Accessor
 builder.Services.AddHttpContextAccessor();
@@ -41,15 +54,26 @@ builder.Services.AddAutoMapper(cfg =>
 builder.Services.AddValidatorsFromAssembly(typeof(MappingProfile).Assembly);
 
 // 6. Infrastructure & Security Services
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+builder.Services.Configure<FileLoggingOptions>(builder.Configuration.GetSection("FileLogging"));
+builder.Services.AddSingleton<ILogQueryService, LogQueryService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
+builder.Services.AddSingleton<AuthCookieService>();
 
 // 7. Application Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<INotificationPublisher, SignalRNotificationPublisher>();
+builder.Services.AddHostedService<TokenCleanupService>();
 
 // 8. Controllers & JSON Options
 builder.Services.AddControllers()
@@ -81,6 +105,48 @@ builder.Services.AddAuthentication(options =>
 {
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (string.IsNullOrEmpty(context.Token) &&
+                context.Request.Cookies.TryGetValue(AuthCookieService.AccessCookie, out var cookieToken) &&
+                !string.IsNullOrEmpty(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = async context =>
+        {
+            var idClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(idClaim, out var userId))
+            {
+                context.Fail("Invalid token subject.");
+                return;
+            }
+
+            var cache = context.HttpContext.RequestServices.GetRequiredService<ICacheService>();
+            var scopeFactory = context.HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
+            var isActive = await cache.GetOrCreateAsync(
+                $"auth:active:{userId}",
+                async ct =>
+                {
+                    using var scope = scopeFactory.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    return await db.Users.AsNoTracking()
+                        .Where(u => u.Id == userId && u.IsActive)
+                        .AnyAsync(ct);
+                },
+                TimeSpan.FromSeconds(60),
+                context.HttpContext.RequestAborted);
+
+            if (!isActive)
+            {
+                context.Fail("Account is inactive or no longer exists.");
+            }
+        }
+    };
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -106,14 +172,44 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://localhost:3000")
+        var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>();
+        if (origins == null || origins.Length == 0)
+        {
+            origins = new[] { "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000" };
+        }
+        policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("X-Correlation-ID");
     });
+});
+
+var authPermitLimit = int.TryParse(builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) && apl > 0 ? apl : 30;
+var authWindowSeconds = int.TryParse(builder.Configuration["RateLimiting:AuthWindowSeconds"], out var aws) && aws > 0 ? aws : 60;
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.ContentType = "application/json";
+        var body = ApiResponse<object>.Fail("Too many requests. Please wait a moment and try again.", statusCode: 429);
+        await ctx.HttpContext.Response.WriteAsync(
+            System.Text.Json.JsonSerializer.Serialize(body, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            }), ct);
+    };
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = authPermitLimit,
+                Window = TimeSpan.FromSeconds(authWindowSeconds),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 
 // 11. Swagger / OpenAPI
@@ -153,7 +249,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// 12. Global Exception Handling
+// 12. Tracing, Security Headers & Global Exception Handling
+app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 // 13. Database Migration
@@ -187,17 +285,36 @@ app.UseSwaggerUI(c =>
         "Employee Task Management API v1");
 
     c.RoutePrefix = "swagger";
+    c.DisplayRequestDuration();
+    c.EnablePersistAuthorization();
+    // Keep on a single line: Swashbuckle embeds this inside a JS single-quoted string passed to JSON.parse().
+    c.UseRequestInterceptor(
+        "function (req) { req.credentials = 'same-origin'; var method = (req.method || 'GET').toUpperCase(); var unsafe = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE'; var hasAuth = Object.keys(req.headers || {}).some(function (k) { return k.toLowerCase() === 'authorization'; }); var url = (req.url || '').toLowerCase(); if (!unsafe || hasAuth || url.indexOf('/api/auth/login') !== -1 || req.headers['X-CSRF-TOKEN']) { return req; } return fetch('/api/auth/csrf', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.data) { req.headers['X-CSRF-TOKEN'] = j.data; } return req; }).catch(function () { return req; }); }");
 });
 
 // 15. Middleware Pipeline
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
+
+app.UseRateLimiter();
+
+app.UseMiddleware<CsrfProtectionMiddleware>();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+}
+
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

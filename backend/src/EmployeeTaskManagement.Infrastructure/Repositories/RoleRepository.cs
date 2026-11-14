@@ -27,7 +27,7 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
 
         public async Task<IEnumerable<RoleDto>> GetAllRolesAsync()
         {
-            var roles = await _context.Roles.ToListAsync();
+            var roles = await _context.Roles.AsNoTracking().ToListAsync();
             return _mapper.Map<IEnumerable<RoleDto>>(roles);
         }
     }

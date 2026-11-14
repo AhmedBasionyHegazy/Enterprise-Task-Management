@@ -4,7 +4,11 @@ using Microsoft.Extensions.Logging;
 using EmployeeTaskManagement.Application.Common;
 using EmployeeTaskManagement.Application.DTOs.Comments;
 using EmployeeTaskManagement.Application.DTOs.Tasks;
+using EmployeeTaskManagement.Application.Interfaces.Audit;
+using EmployeeTaskManagement.Application.Interfaces.Caching;
+using EmployeeTaskManagement.Application.Interfaces.Notifications;
 using EmployeeTaskManagement.Application.Interfaces.Persistence;
+using Microsoft.Extensions.Logging.Abstractions;
 using EmployeeTaskManagement.Application.Mappings;
 using EmployeeTaskManagement.Application.Services;
 using EmployeeTaskManagement.Core.Entities;
@@ -32,7 +36,13 @@ namespace EmployeeTaskManagement.Tests
             _mapper = provider.GetRequiredService<IMapper>();
 
             _mockUow = new Mock<IUnitOfWork>();
-            _taskService = new TaskService(_mockUow.Object, _mapper);
+            _taskService = new TaskService(
+                _mockUow.Object,
+                _mapper,
+                Mock.Of<IAuditService>(),
+                Mock.Of<INotificationService>(),
+                Mock.Of<ICacheService>(),
+                NullLogger<TaskService>.Instance);
         }
 
         [Fact]

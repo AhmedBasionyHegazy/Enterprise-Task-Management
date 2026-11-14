@@ -35,11 +35,15 @@ namespace EmployeeTaskManagement.Application.Validators
 
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
-                .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
+                .MinimumLength(6).WithMessage("Password must be at least 6 characters.")
+                .MaximumLength(100).WithMessage("Password cannot exceed 100 characters.");
 
             RuleFor(x => x.FullName)
                 .NotEmpty().WithMessage("Full Name is required.")
                 .MaximumLength(100).WithMessage("Full Name cannot exceed 100 characters.");
+
+            RuleFor(x => x.Department)
+                .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
             RuleFor(x => x.RoleId)
                 .GreaterThan(0).WithMessage("A valid Role must be selected.");
@@ -55,11 +59,15 @@ namespace EmployeeTaskManagement.Application.Validators
 
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("A valid email address is required.");
+                .EmailAddress().WithMessage("A valid email address is required.")
+                .MaximumLength(100).WithMessage("Email cannot exceed 100 characters.");
 
             RuleFor(x => x.FullName)
                 .NotEmpty().WithMessage("Full Name is required.")
                 .MaximumLength(100).WithMessage("Full Name cannot exceed 100 characters.");
+
+            RuleFor(x => x.Department)
+                .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
             RuleFor(x => x.RoleId)
                 .GreaterThan(0).WithMessage("A valid Role must be selected.");
@@ -67,7 +75,8 @@ namespace EmployeeTaskManagement.Application.Validators
             When(x => !string.IsNullOrEmpty(x.Password), () =>
             {
                 RuleFor(x => x.Password!)
-                    .MinimumLength(6).WithMessage("New password must be at least 6 characters.");
+                    .MinimumLength(6).WithMessage("New password must be at least 6 characters.")
+                    .MaximumLength(100).WithMessage("New password cannot exceed 100 characters.");
             });
         }
     }
@@ -79,6 +88,9 @@ namespace EmployeeTaskManagement.Application.Validators
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Task title is required.")
                 .MaximumLength(200).WithMessage("Task title cannot exceed 200 characters.");
+
+            RuleFor(x => x.Description)
+                .MaximumLength(4000).WithMessage("Description cannot exceed 4000 characters.");
 
             RuleFor(x => x.Priority)
                 .Must(p => TaskPriorities.All.Contains(p))
@@ -108,6 +120,9 @@ namespace EmployeeTaskManagement.Application.Validators
                 .NotEmpty().WithMessage("Task title is required.")
                 .MaximumLength(200).WithMessage("Task title cannot exceed 200 characters.");
 
+            RuleFor(x => x.Description)
+                .MaximumLength(4000).WithMessage("Description cannot exceed 4000 characters.");
+
             RuleFor(x => x.Priority)
                 .Must(p => TaskPriorities.All.Contains(p))
                 .WithMessage("Priority must be Low, Medium, or High.");
@@ -122,6 +137,17 @@ namespace EmployeeTaskManagement.Application.Validators
 
             RuleFor(x => x.AssignedToUserId)
                 .GreaterThan(0).WithMessage("Task must be assigned to a valid employee.");
+        }
+    }
+
+    public class TaskStatusUpdateValidator : AbstractValidator<TaskStatusUpdateDto>
+    {
+        public TaskStatusUpdateValidator()
+        {
+            RuleFor(x => x.Status)
+                .NotEmpty().WithMessage("Status is required.")
+                .Must(s => TaskStatuses.All.Contains(s))
+                .WithMessage("Status must be New, In Progress, or Completed.");
         }
     }
 

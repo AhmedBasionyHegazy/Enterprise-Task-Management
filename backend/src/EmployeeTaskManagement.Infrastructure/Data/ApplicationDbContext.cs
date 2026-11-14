@@ -5,14 +5,14 @@ using System.Linq.Expressions;
 
 namespace EmployeeTaskManagement.Infrastructure.Data
 {
-    public class ApplicationDbContext : DbContext
+    public partial class ApplicationDbContext : DbContext
     {
         public string user;
         private readonly UserResolverService _userResolverService;
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, UserResolverService userResolverService) : base(options)
         {
             _userResolverService = userResolverService;
-            user = _userResolverService.GetUser();
+            user = _userResolverService.GetUser() ?? "system";
         }
 
         public virtual DbSet<Role> Roles { get; set; } = null!;
@@ -20,37 +20,10 @@ namespace EmployeeTaskManagement.Infrastructure.Data
         public virtual DbSet<TaskEntity> Tasks { get; set; } = null!;
         public virtual DbSet<TaskComment> TaskComments { get; set; } = null!;
 
-        public override int SaveChanges()
-        {
-            ApplyAuditAndSoftDelete();
-
-            return base.SaveChanges();
-        }
-
-        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-        {
-            ApplyAuditAndSoftDelete();
-
-            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
-        {
-            ApplyAuditAndSoftDelete();
-
-            return base.SaveChanges(acceptAllChangesOnSuccess);
-        }
-
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            ApplyAuditAndSoftDelete();
-
-            return base.SaveChangesAsync(cancellationToken);
-        }
-
         private void ApplyAuditAndSoftDelete()
         {
             var now = DateTime.Now;
+            user = _userResolverService.GetUser() ?? "system";
 
             foreach (var entry in ChangeTracker.Entries<IEntity>().ToList())
             {
@@ -163,6 +136,8 @@ namespace EmployeeTaskManagement.Infrastructure.Data
             // ================================================================
             // Seed Data for EF Core Migrations (Runs automatically on Update-Database)
             // ================================================================
+
+            ConfigureAuditing(modelBuilder);
 
             modelBuilder.Entity<Role>().HasData(
                 new Role

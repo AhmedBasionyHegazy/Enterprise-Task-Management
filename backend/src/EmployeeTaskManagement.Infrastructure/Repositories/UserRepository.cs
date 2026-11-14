@@ -53,6 +53,7 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
         public async Task<IEnumerable<UserDto>> GetEmployeesAsync()
         {
             var employees = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Role)
                 .Where(u => u.Role != null && u.Role.Name == "Employee")
                 .OrderBy(u => u.FullName)
@@ -64,12 +65,26 @@ namespace EmployeeTaskManagement.Infrastructure.Repositories
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Role)
                 .OrderBy(u => u.FullName)
                 .ToListAsync();
 
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
+
+        public async Task<List<int>> GetActiveAdminIdsAsync()
+
+        {
+
+            return await _context.Users.AsNoTracking()
+
+                .Where(u => u.IsActive && u.Role != null && u.Role.Name == "Admin")
+
+                .Select(u => u.Id).ToListAsync();
+
+        }
+
 
         public void UpdateEntity(User user)
         {

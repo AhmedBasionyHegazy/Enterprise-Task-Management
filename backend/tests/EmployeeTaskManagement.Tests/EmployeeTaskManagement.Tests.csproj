@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\EmployeeTaskManagement.Core\EmployeeTaskManagement.Core.csproj" />
     <ProjectReference Include="..\..\src\EmployeeTaskManagement.Application\EmployeeTaskManagement.Application.csproj" />
     <ProjectReference Include="..\..\src\EmployeeTaskManagement.Infrastructure\EmployeeTaskManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\EmployeeTaskManagement.API\EmployeeTaskManagement.API.csproj" />
   </ItemGroup>
 
 </Project>
