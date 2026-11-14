@@ -85,6 +85,11 @@ export const useSessionsQuery = (enabled = true) =>
     queryKey: queryKeys.sessions,
     queryFn: authService.getSessions,
     enabled,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: enabled ? 5_000 : false,
   });
 
 export const useAuditLogsQuery = (params: AuditQueryParams, enabled = true) =>

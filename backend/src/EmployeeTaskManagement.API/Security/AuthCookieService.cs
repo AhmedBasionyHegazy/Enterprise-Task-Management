@@ -10,7 +10,9 @@ namespace EmployeeTaskManagement.API.Security
         public const string RefreshCookie = "tf_refresh";
         public const string CsrfCookie = "tf_csrf";
         public const string CsrfHeader = "X-CSRF-TOKEN";
-        public const string RefreshPath = "/api/auth";
+        // Scope under "/api" rather than "/api/auth" so mixed-case routes (e.g. Swagger's /api/Auth/*) still receive the cookie.
+        public const string RefreshPath = "/api";
+        private const string LegacyRefreshPath = "/api/auth";
 
         private readonly SameSiteMode _sameSite;
         private readonly bool _secure;
@@ -65,6 +67,7 @@ namespace EmployeeTaskManagement.API.Security
         {
             ctx.Response.Cookies.Delete(AccessCookie, Options(null, "/"));
             ctx.Response.Cookies.Delete(RefreshCookie, Options(null, RefreshPath));
+            ctx.Response.Cookies.Delete(RefreshCookie, Options(null, LegacyRefreshPath));
             ctx.Response.Cookies.Delete(CsrfCookie, Options(null, "/"));
         }
     }

@@ -50,6 +50,7 @@ namespace EmployeeTaskManagement.Infrastructure.Security
             var now = DateTime.UtcNow;
             var raw = NewRawToken();
             var entity = NewEntity(userId, Hash(raw), Guid.NewGuid(), now, now);
+            entity.LastUsedUtc = now;
             _db.RefreshTokens.Add(entity);
             await _db.SaveChangesAsync();
             return (raw, entity.ExpiresUtc);
@@ -145,7 +146,10 @@ namespace EmployeeTaskManagement.Infrastructure.Security
             if (!string.IsNullOrEmpty(currentRawRefreshToken))
             {
                 var h = Hash(currentRawRefreshToken);
-                currentFamily = await _db.RefreshTokens.AsNoTracking().Where(t => t.TokenHash == h).Select(t => (Guid?)t.FamilyId).FirstOrDefaultAsync();
+                currentFamily = await _db.RefreshTokens.AsNoTracking()
+                    .Where(t => t.UserId == userId && t.TokenHash == h)
+                    .Select(t => (Guid?)t.FamilyId)
+                    .FirstOrDefaultAsync();
             }
 
             var active = await _db.RefreshTokens.AsNoTracking()
@@ -153,16 +157,19 @@ namespace EmployeeTaskManagement.Infrastructure.Security
                 .OrderByDescending(t => t.LastUsedUtc ?? t.CreatedUtc)
                 .ToListAsync();
 
-            return active.Select(t => new SessionDto
-            {
-                Id = t.Id,
-                DeviceName = t.DeviceName,
-                IpAddress = t.IpAddress,
-                SessionStartedUtc = DateTime.SpecifyKind(t.SessionStartedUtc, DateTimeKind.Utc),
-                LastUsedUtc = t.LastUsedUtc.HasValue ? DateTime.SpecifyKind(t.LastUsedUtc.Value, DateTimeKind.Utc) : null,
-                ExpiresUtc = DateTime.SpecifyKind(t.ExpiresUtc, DateTimeKind.Utc),
-                IsCurrent = currentFamily.HasValue && t.FamilyId == currentFamily.Value
-            }).ToList();
+            return active
+                .GroupBy(t => t.FamilyId)
+                .Select(g => g.First())
+                .Select(t => new SessionDto
+                {
+                    Id = t.Id,
+                    DeviceName = t.DeviceName,
+                    IpAddress = t.IpAddress,
+                    SessionStartedUtc = DateTime.SpecifyKind(t.SessionStartedUtc, DateTimeKind.Utc),
+                    LastUsedUtc = t.LastUsedUtc.HasValue ? DateTime.SpecifyKind(t.LastUsedUtc.Value, DateTimeKind.Utc) : null,
+                    ExpiresUtc = DateTime.SpecifyKind(t.ExpiresUtc, DateTimeKind.Utc),
+                    IsCurrent = currentFamily.HasValue && t.FamilyId == currentFamily.Value
+                }).ToList();
         }
 
         public async Task<bool> RevokeSessionAsync(int userId, Guid sessionId)

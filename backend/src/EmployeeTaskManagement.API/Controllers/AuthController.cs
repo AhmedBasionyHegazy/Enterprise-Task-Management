@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.SignalR;
+using EmployeeTaskManagement.API.Hubs;
 using EmployeeTaskManagement.API.Security;
 using EmployeeTaskManagement.Application.Common;
 using EmployeeTaskManagement.Application.DTOs.Auth;
@@ -20,14 +22,22 @@ namespace EmployeeTaskManagement.API.Controllers
         private readonly AuthCookieService _cookies;
         private readonly IAuditService _audit;
         private readonly IMapper _mapper;
+        private readonly IHubContext<NotificationHub> _hub;
 
-        public AuthController(IAuthService authService, ITokenSessionService sessions, AuthCookieService cookies, IAuditService audit, IMapper mapper)
+        public AuthController(
+            IAuthService authService,
+            ITokenSessionService sessions,
+            AuthCookieService cookies,
+            IAuditService audit,
+            IMapper mapper,
+            IHubContext<NotificationHub> hub)
         {
             _authService = authService;
             _sessions = sessions;
             _cookies = cookies;
             _audit = audit;
             _mapper = mapper;
+            _hub = hub;
         }
 
         [HttpPost("login")]
@@ -44,6 +54,7 @@ namespace EmployeeTaskManagement.API.Controllers
             var (refresh, refreshExpires) = await _sessions.IssueRefreshTokenAsync(result.Data!.User.Id);
             _cookies.WriteSession(HttpContext, new SessionTokens(result.Data.Token, result.Data.ExpiresAt, refresh, refreshExpires));
             _cookies.EnsureCsrf(HttpContext, rotate: true);
+            await NotifySessionsChangedAsync(result.Data.User.Id);
 
             return Ok(result);   // Token is [JsonIgnore]: tokens only ever travel in HttpOnly cookies
         }
@@ -64,6 +75,7 @@ namespace EmployeeTaskManagement.API.Controllers
             {
                 case RefreshStatus.Success:
                     _cookies.WriteSession(HttpContext, rotated.Tokens!);
+                    await NotifySessionsChangedAsync(rotated.User!.Id);
                     return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
                     {
                         ExpiresAt = rotated.Tokens!.AccessExpiresUtc,
@@ -89,7 +101,10 @@ namespace EmployeeTaskManagement.API.Controllers
             {
                 var (userId, username) = await _sessions.RevokeByTokenAsync(raw, "Logout");
                 if (userId.HasValue)
+                {
                     await _audit.LogAsync(AuditActions.Logout, "Auth", userId.ToString(), true, "User signed out.", userId, username);
+                    await NotifySessionsChangedAsync(userId.Value);
+                }
             }
             _cookies.Clear(HttpContext);
             return Ok(ApiResponse<bool>.Ok(true, "Signed out."));
@@ -101,14 +116,18 @@ namespace EmployeeTaskManagement.API.Controllers
         {
             var count = await _sessions.RevokeAllForUserAsync(CurrentUserId, "LogoutAll");
             await _audit.LogAsync(AuditActions.LogoutAll, "Auth", CurrentUserId.ToString(), true, $"Signed out of all devices ({count} session(s) revoked).");
+            await NotifySessionsChangedAsync(CurrentUserId);
             _cookies.Clear(HttpContext);
             return Ok(ApiResponse<int>.Ok(count, "Signed out of all devices."));
         }
 
         [HttpGet("sessions")]
         [Authorize]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> GetSessions()
         {
+            Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+            Response.Headers.Pragma = "no-cache";
             var list = await _sessions.GetSessionsAsync(CurrentUserId, Request.Cookies[AuthCookieService.RefreshCookie]);
             return Ok(ApiResponse<IReadOnlyList<SessionDto>>.Ok(list));
         }
@@ -121,6 +140,7 @@ namespace EmployeeTaskManagement.API.Controllers
             if (!ok) return NotFound(ApiResponse<bool>.Fail("Session not found.", statusCode: 404));
 
             await _audit.LogAsync(AuditActions.SessionRevoked, "Auth", CurrentUserId.ToString(), true, "A session was revoked.");
+            await NotifySessionsChangedAsync(CurrentUserId);
             return Ok(ApiResponse<bool>.Ok(true, "Session revoked."));
         }
 
@@ -138,6 +158,18 @@ namespace EmployeeTaskManagement.API.Controllers
                 return StatusCode(result.StatusCode, result);
             }
             return Ok(result);
+        }
+
+        private async Task NotifySessionsChangedAsync(int userId)
+        {
+            try
+            {
+                await _hub.Clients.User(userId.ToString()).SendAsync("sessionsChanged");
+            }
+            catch
+            {
+                // Live session refresh hint is best-effort and must not fail auth operations.
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -76,6 +77,7 @@ builder.Services.AddSingleton<INotificationPublisher, SignalRNotificationPublish
 builder.Services.AddHostedService<TokenCleanupService>();
 
 // 8. Controllers & JSON Options
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -249,7 +251,11 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// 12. Tracing, Security Headers & Global Exception Handling
+// 12. Forwarded Headers, Tracing, Security Headers & Global Exception Handling
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();

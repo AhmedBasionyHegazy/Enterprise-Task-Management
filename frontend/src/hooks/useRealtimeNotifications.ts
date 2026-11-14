@@ -69,6 +69,10 @@ export const useRealtimeNotifications = () => {
       toast.info(item.message, item.title);
     });
 
+    connection.on('sessionsChanged', () => {
+      qc.invalidateQueries({ queryKey: queryKeys.sessions });
+    });
+
     // Defer start by a macrotask so React StrictMode's synchronous double-mount
     // cancels before negotiation begins, eliminating "stopped during negotiation".
     const startTimer = window.setTimeout(() => {

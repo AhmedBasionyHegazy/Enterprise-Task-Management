@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, Smartphone, Globe, Trash2, LogOut } from 'lucide-react';
+import { Monitor, Smartphone, Globe, Trash2, LogOut, RefreshCw, AlertCircle } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { useRevokeSessionMutation, useSessionsQuery } from '../../hooks/useQueries';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -12,7 +12,13 @@ interface SessionsModalProps {
 
 export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose }) => {
   const { logoutAll } = useAuthStore();
-  const { data: sessions = [], isLoading } = useSessionsQuery(isOpen);
+  const {
+    data: sessions = [],
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useSessionsQuery(isOpen);
   const revokeMutation = useRevokeSessionMutation();
 
   const handleRevoke = async (id: string, isCurrent: boolean) => {
@@ -53,10 +59,45 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
       maxWidth="lg"
     >
       <div className="space-y-4">
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <div className="text-xs text-slate-600">
+            <span className="font-semibold text-slate-900">{sessions.length}</span>{' '}
+            active {sessions.length === 1 ? 'session' : 'sessions'}
+            <span className="hidden sm:inline text-slate-400">
+              {' '}· auto-syncs every 5s &amp; across devices
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 rounded-md transition-colors"
+            title="Refresh active sessions"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <span>{isFetching ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="py-8 flex items-center justify-center gap-2 text-xs text-slate-500">
             <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <span>Loading active sessions...</span>
+          </div>
+        ) : isError ? (
+          <div className="py-6 px-4 rounded-xl border border-red-200 bg-red-50/70 text-center space-y-2">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-red-700">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>Could not load active sessions.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 bg-white border border-red-200 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry</span>
+            </button>
           </div>
         ) : sessions.length === 0 ? (
           <div className="py-8 text-center text-xs text-slate-400">
@@ -118,9 +159,10 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ isOpen, onClose })
         )}
 
         <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-[11px] text-slate-500">
-            Tokens automatically rotate and revoke on reuse detection.
-          </span>
+          <div className="text-[11px] text-slate-500 space-y-0.5">
+            <div>Active un-revoked sessions across browsers and devices appear here.</div>
+            <div>Signing out revokes only the current device unless you choose Logout All Devices.</div>
+          </div>
           <button
             type="button"
             onClick={handleLogoutAll}
