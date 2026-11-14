@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { TaskItem, TaskComment } from '../../types';
-import { taskService } from '../../services/taskService';
+import { TaskItem } from '../../types';
+import {
+  useAddCommentMutation,
+  useTaskCommentsQuery,
+  useUpdateTaskStatusMutation,
+} from '../../hooks/useQueries';
 import { Modal } from '../common/Modal';
 import { PriorityBadge, StatusBadge, RoleBadge } from '../common/Badge';
 import { toast } from '../../store/useToastStore';
-import { 
-  Calendar, 
-  User as UserIcon, 
-  Send, 
-  Clock, 
+import {
+  Calendar,
+  User as UserIcon,
+  Send,
+  Clock,
   AlertTriangle,
   MessageSquare,
-  CheckCircle2
+  History,
 } from 'lucide-react';
 
 interface TaskDetailsModalProps {
@@ -19,6 +23,7 @@ interface TaskDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskUpdated?: () => void;
+  onOpenHistory?: (task: TaskItem) => void;
 }
 
 export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
@@ -26,45 +31,35 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   isOpen,
   onClose,
   onTaskUpdated,
+  onOpenHistory,
 }) => {
-  const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState('');
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(task?.status || 'New');
+
+  const { data: comments = [], isLoading: isLoadingComments } = useTaskCommentsQuery(
+    task?.id ?? null,
+    isOpen && !!task
+  );
+  const updateStatusMutation = useUpdateTaskStatusMutation();
+  const addCommentMutation = useAddCommentMutation();
 
   useEffect(() => {
     if (task && isOpen) {
       setCurrentStatus(task.status);
-      loadComments(task.id);
     }
   }, [task, isOpen]);
 
-  const loadComments = async (taskId: number) => {
-    setIsLoadingComments(true);
-    try {
-      const data = await taskService.getComments(taskId);
-      setComments(data);
-    } catch {
-      toast.error('Failed to load comments');
-    } finally {
-      setIsLoadingComments(false);
-    }
-  };
-
   const handleStatusChange = async (newStatus: string) => {
     if (!task) return;
-    setIsUpdatingStatus(true);
+    const prevStatus = currentStatus;
+    setCurrentStatus(newStatus as TaskItem['status']);
     try {
-      await taskService.updateTaskStatus(task.id, newStatus);
-      setCurrentStatus(newStatus as any);
+      await updateStatusMutation.mutateAsync({ id: task.id, status: newStatus });
       toast.success(`Task status updated to ${newStatus}`);
       onTaskUpdated?.();
     } catch (err: any) {
+      setCurrentStatus(prevStatus);
       toast.error(err.response?.data?.message || 'Failed to update status');
-    } finally {
-      setIsUpdatingStatus(false);
     }
   };
 
@@ -72,17 +67,13 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     e.preventDefault();
     if (!task || !newComment.trim()) return;
 
-    setIsSubmittingComment(true);
     try {
-      const added = await taskService.addComment(task.id, newComment.trim());
-      setComments((prev) => [...prev, added]);
+      await addCommentMutation.mutateAsync({ taskId: task.id, comment: newComment.trim() });
       setNewComment('');
       toast.success('Comment posted');
       onTaskUpdated?.();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to add comment');
-    } finally {
-      setIsSubmittingComment(false);
     }
   };
 
@@ -129,19 +120,32 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             </div>
           </div>
 
-          {/* Quick status update */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-            <span className="text-xs font-medium text-slate-600">Change Status:</span>
-            <select
-              value={currentStatus}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              disabled={isUpdatingStatus}
-              className="text-xs font-medium bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:outline-hidden disabled:opacity-50"
-            >
-              <option value="New">New</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
+          {/* Quick status update & History */}
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-600">Change Status:</span>
+              <select
+                value={currentStatus}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={updateStatusMutation.isPending}
+                className="text-xs font-medium bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:outline-hidden disabled:opacity-50"
+              >
+                <option value="New">New</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+            {onOpenHistory && (
+              <button
+                type="button"
+                onClick={() => onOpenHistory(task)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition"
+                title="View task change history"
+              >
+                <History className="w-3.5 h-3.5 text-blue-600" />
+                <span>History</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -157,7 +161,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-3 rounded-xl border border-slate-200 bg-white">
             <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-              <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+              <Calendar className="w-3.5 h-3.5 text-blue-600" />
               <span>Timeline</span>
             </div>
             <div className="text-xs text-slate-700">
@@ -170,7 +174,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
           <div className="p-3 rounded-xl border border-slate-200 bg-white">
             <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-              <UserIcon className="w-3.5 h-3.5 text-indigo-500" />
+              <UserIcon className="w-3.5 h-3.5 text-blue-600" />
               <span>People</span>
             </div>
             <div className="text-xs text-slate-700">
@@ -189,7 +193,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         <div className="pt-4 border-t border-slate-200">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-indigo-600" />
+              <MessageSquare className="w-4 h-4 text-blue-600" />
               Discussion & Comments ({comments.length})
             </h4>
           </div>
@@ -205,7 +209,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             ) : (
               comments.map((c) => (
                 <div key={c.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-800">{c.userFullName}</span>
                       <RoleBadge role={c.userRole} />
@@ -228,15 +232,15 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add your note or progress comment..."
-              className="flex-1 text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="flex-1 min-w-0 text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             />
             <button
               type="submit"
-              disabled={isSubmittingComment || !newComment.trim()}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-xs flex items-center gap-1.5 hover:bg-indigo-700 disabled:opacity-50 transition shadow-xs"
+              disabled={addCommentMutation.isPending || !newComment.trim()}
+              className="shrink-0 px-3.5 sm:px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs flex items-center gap-1.5 hover:bg-blue-700 disabled:opacity-50 transition shadow-xs"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{isSubmittingComment ? 'Sending...' : 'Post'}</span>
+              <span>{addCommentMutation.isPending ? 'Sending...' : 'Post'}</span>
             </button>
           </form>
         </div>

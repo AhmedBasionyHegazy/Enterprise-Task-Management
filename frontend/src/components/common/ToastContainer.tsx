@@ -16,7 +16,7 @@ export const ToastContainer: React.FC = () => {
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />;
       case 'info':
-        return <Info className="w-5 h-5 text-indigo-500 flex-shrink-0" />;
+        return <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />;
     }
   };
 
@@ -29,12 +29,12 @@ export const ToastContainer: React.FC = () => {
       case 'warning':
         return 'border-amber-200 bg-amber-50/90 text-amber-950 dark:border-amber-800 dark:bg-amber-950/80 dark:text-amber-100';
       case 'info':
-        return 'border-indigo-200 bg-indigo-50/90 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-100';
+        return 'border-blue-200 bg-blue-50/95 text-blue-950';
     }
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+    <div className="fixed bottom-20 lg:bottom-4 right-3 left-3 sm:left-auto sm:right-4 z-50 flex flex-col gap-2.5 sm:max-w-sm sm:w-full pointer-events-none">
       {toasts.map((toast) => (
         <div
           key={toast.id}

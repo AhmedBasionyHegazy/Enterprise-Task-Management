@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Role, UserCreatePayload, UserUpdatePayload } from '../../types';
-import { userService } from '../../services/userService';
+import {
+  useCreateUserMutation,
+  useRolesQuery,
+  useUpdateUserMutation,
+} from '../../hooks/useQueries';
 import { Modal } from '../common/Modal';
 import { toast } from '../../store/useToastStore';
 
@@ -8,8 +12,13 @@ interface EmployeeFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   employeeToEdit?: User | null;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
+
+const FALLBACK_ROLES: Role[] = [
+  { id: 1, name: 'Admin' },
+  { id: 2, name: 'Employee' },
+];
 
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   isOpen,
@@ -17,8 +26,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   employeeToEdit,
   onSuccess,
 }) => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: fetchedRoles } = useRolesQuery(isOpen);
+  const roles = fetchedRoles && fetchedRoles.length > 0 ? fetchedRoles : FALLBACK_ROLES;
+
+  const createUserMutation = useCreateUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
+  const isSubmitting = createUserMutation.isPending || updateUserMutation.isPending;
 
   const [formData, setFormData] = useState({
     username: '',
@@ -33,7 +46,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      loadRoles();
       if (employeeToEdit) {
         setFormData({
           username: employeeToEdit.username,
@@ -57,19 +69,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     }
   }, [isOpen, employeeToEdit]);
 
-  const loadRoles = async () => {
-    try {
-      const data = await userService.getRoles();
-      setRoles(data);
-    } catch {
-      // Fallback roles if endpoint is restricted
-      setRoles([
-        { id: 1, name: 'Admin' },
-        { id: 2, name: 'Employee' },
-      ]);
-    }
-  };
-
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!employeeToEdit && !formData.username.trim()) errs.username = 'Username is required';
@@ -80,6 +79,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     if (!employeeToEdit && (!formData.password || formData.password.length < 6)) {
       errs.password = 'Password must be at least 6 characters';
     }
+    if (formData.password && formData.password.length > 100) {
+      errs.password = 'Password cannot exceed 100 characters';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -88,7 +90,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     e.preventDefault();
     if (!validate()) return;
 
-    setIsSubmitting(true);
     try {
       if (employeeToEdit) {
         const payload: UserUpdatePayload = {
@@ -99,7 +100,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           roleId: formData.roleId,
           password: formData.password ? formData.password : undefined,
         };
-        await userService.updateUser(employeeToEdit.id, payload);
+        await updateUserMutation.mutateAsync({ id: employeeToEdit.id, payload });
         toast.success('Employee updated successfully');
       } else {
         const payload: UserCreatePayload = {
@@ -110,15 +111,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           password: formData.password,
           roleId: formData.roleId,
         };
-        await userService.createUser(payload);
+        await createUserMutation.mutateAsync(payload);
         toast.success('Employee account created successfully');
       }
-      onSuccess();
+      onSuccess?.();
       onClose();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Operation failed');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -145,7 +144,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             placeholder="e.g. Michael Scott"
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           />
           {errors.fullName && <p className="text-[11px] text-rose-500 mt-1">{errors.fullName}</p>}
         </div>
@@ -161,7 +160,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               placeholder="e.g. michael.scott"
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             />
             {errors.username && <p className="text-[11px] text-rose-500 mt-1">{errors.username}</p>}
           </div>
@@ -177,7 +176,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="e.g. michael.scott@taskflow.com"
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           />
           {errors.email && <p className="text-[11px] text-rose-500 mt-1">{errors.email}</p>}
         </div>
@@ -191,7 +190,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               value={formData.department}
               onChange={(e) => setFormData({ ...formData, department: e.target.value })}
               placeholder="e.g. Engineering, Sales, QA"
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             />
           </div>
 
@@ -200,7 +199,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             <select
               value={formData.roleId}
               onChange={(e) => setFormData({ ...formData, roleId: Number(e.target.value) })}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             >
               {roles.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -221,7 +220,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             placeholder={employeeToEdit ? 'Leave blank to keep current password' : 'At least 6 characters'}
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           />
           {errors.password && <p className="text-[11px] text-rose-500 mt-1">{errors.password}</p>}
         </div>
@@ -238,7 +237,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition shadow-xs"
+            className="px-5 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition shadow-xs"
           >
             {isSubmitting ? 'Saving...' : employeeToEdit ? 'Save Changes' : 'Create Account'}
           </button>

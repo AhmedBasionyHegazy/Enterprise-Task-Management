@@ -9,7 +9,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
   const getStyle = () => {
     switch (status) {
       case 'New':
-        return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-500/10';
+        return 'bg-sky-50 text-sky-700 border-sky-200 ring-1 ring-sky-500/10';
       case 'In Progress':
         return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-500/10';
       case 'Completed':
@@ -72,14 +72,15 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, size = '
   );
 };
 
-export const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
+export const RoleBadge: React.FC<{ role: string; size?: 'sm' | 'md' }> = ({ role, size = 'md' }) => {
   const isAdmin = role === 'Admin';
+  const sizing = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2 py-0.5 text-xs';
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
+      className={`inline-flex items-center rounded-md font-semibold ${sizing} ${
         isAdmin
-          ? 'bg-purple-100 text-purple-700 border border-purple-200'
-          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+          ? 'bg-slate-800 text-white border border-slate-800'
+          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
       }`}
     >
       {role}

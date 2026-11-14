@@ -38,9 +38,9 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-4 py-3.5 bg-white border-t border-slate-200 sm:px-6">
+    <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 px-4 py-3.5 bg-white border-t border-slate-200 sm:px-6 w-full min-w-0">
       {/* Summary & Rows per page */}
-      <div className="flex flex-wrap items-center justify-between sm:justify-start w-full sm:w-auto gap-3 text-xs sm:text-sm text-slate-500">
+      <div className="flex flex-wrap items-center justify-between md:justify-start w-full md:w-auto gap-3 text-xs sm:text-sm text-slate-500">
         <div>
           Showing <span className="font-semibold text-slate-800">{startItem}</span> to{' '}
           <span className="font-semibold text-slate-800">{endItem}</span> of{' '}
@@ -53,7 +53,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="text-xs rounded-md border border-slate-200 py-1 px-2 text-slate-700 bg-slate-50 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+              className="text-xs rounded-md border border-slate-200 py-1 px-2 text-slate-700 bg-slate-50 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -65,23 +65,23 @@ export const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       {/* Page Navigation Controls */}
-      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-1.5">
+      <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-1.5">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="px-2.5 sm:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
+          className="px-2.5 md:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="sm:hidden">Prev</span>
+          <span className="md:hidden">Prev</span>
         </button>
 
-        {/* Mobile page indicator */}
-        <span className="sm:hidden text-xs font-medium text-slate-600">
+        {/* Mobile/tablet page indicator */}
+        <span className="md:hidden text-xs font-medium text-slate-600">
           Page <strong className="text-slate-900">{currentPage}</strong> of <strong className="text-slate-900">{totalPages}</strong>
         </span>
 
         {/* Desktop page numbers */}
-        <div className="hidden sm:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1">
           {startPage > 1 && (
             <>
               <button
@@ -100,7 +100,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               onClick={() => onPageChange(p)}
               className={`px-3 py-1 text-xs font-medium rounded-lg transition ${
                 p === currentPage
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -124,9 +124,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="px-2.5 sm:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
+          className="px-2.5 md:px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs"
         >
-          <span className="sm:hidden">Next</span>
+          <span className="md:hidden">Next</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

@@ -1,44 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { userService } from '../services/userService';
+import { useToggleUserStatusMutation, useUsersQuery } from '../hooks/useQueries';
 import { User } from '../types';
 import { RoleBadge } from '../components/common/Badge';
 import { EmployeeFormModal } from '../components/employees/EmployeeFormModal';
 import { toast } from '../store/useToastStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { 
-  UserPlus, 
-  Search, 
-  Edit2, 
-  Power, 
-  CheckCircle2, 
+import {
+  UserPlus,
+  Search,
+  Edit2,
+  Power,
+  CheckCircle2,
   XCircle,
   Briefcase,
-  Calendar
+  Calendar,
 } from 'lucide-react';
 
 export const EmployeesPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: users = [], isLoading, isError } = useUsersQuery();
+  const toggleStatusMutation = useToggleUserStatusMutation();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<User | null>(null);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    setIsLoading(true);
-    try {
-      const data = await userService.getAllUsers();
-      setUsers(data);
-    } catch {
+    if (isError) {
       toast.error('Failed to load user directory');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [isError]);
 
   const handleToggleStatus = async (user: User) => {
     if (user.id === currentUser?.id) {
@@ -47,10 +38,9 @@ export const EmployeesPage: React.FC = () => {
     }
 
     try {
-      await userService.toggleUserStatus(user.id);
+      await toggleStatusMutation.mutateAsync(user.id);
       const action = user.isActive ? 'deactivated' : 'activated';
       toast.success(`${user.fullName} has been ${action}`);
-      loadUsers();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to update user status');
     }
@@ -68,11 +58,11 @@ export const EmployeesPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-full min-w-0 space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
             Employee Directory & Access Management
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -85,7 +75,7 @@ export const EmployeesPage: React.FC = () => {
             setEmployeeToEdit(null);
             setIsModalOpen(true);
           }}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-xs"
         >
           <UserPlus className="w-4 h-4" />
           <span>Add New Employee</span>
@@ -93,15 +83,15 @@ export const EmployeesPage: React.FC = () => {
       </div>
 
       {/* Filter / Search Bar */}
-      <div className="p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+        <div className="relative flex-1 w-full min-w-0 sm:max-w-md">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, username, email, or department..."
-            className="w-full pl-9 pr-4 py-2.5 sm:py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition"
+            className="w-full pl-9 pr-4 py-2.5 sm:py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500 transition"
           />
         </div>
 
@@ -112,13 +102,13 @@ export const EmployeesPage: React.FC = () => {
       </div>
 
       {/* Employees Container */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        {/* 1. MOBILE CARD LIST VIEW (< 768px) */}
-        <div className="md:hidden divide-y divide-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden min-w-0 w-full">
+        {/* 1. MOBILE & TABLET CARD LIST VIEW (< 1024px) */}
+        <div className="lg:hidden divide-y divide-slate-100">
           {isLoading ? (
             <div className="py-12 text-center text-slate-400 text-xs">
               <div className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                 <span>Loading employee directory...</span>
               </div>
             </div>
@@ -129,19 +119,21 @@ export const EmployeesPage: React.FC = () => {
           ) : (
             filteredUsers.map((emp) => (
               <div key={emp.id} className="p-4 space-y-3 hover:bg-slate-50/60 transition">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 text-indigo-700 font-bold flex items-center justify-center text-sm border border-slate-200 shrink-0">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 font-bold flex items-center justify-center text-sm border border-blue-100 shrink-0">
                       {emp.fullName.charAt(0).toUpperCase()}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="font-semibold text-sm text-slate-900 truncate">{emp.fullName}</div>
-                      <div className="text-xs text-slate-400 truncate">
+                      <div className="text-xs text-slate-400 truncate [overflow-wrap:anywhere]">
                         @{emp.username} &bull; {emp.email}
                       </div>
                     </div>
                   </div>
-                  <RoleBadge role={emp.roleName} size="sm" />
+                  <div className="shrink-0">
+                    <RoleBadge role={emp.roleName} size="sm" />
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-1">
@@ -161,7 +153,7 @@ export const EmployeesPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
                   <div>
                     {emp.isActive ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -176,13 +168,13 @@ export const EmployeesPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => {
                         setEmployeeToEdit(emp);
                         setIsModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                      className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 transition"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                       <span>Edit</span>
@@ -207,8 +199,8 @@ export const EmployeesPage: React.FC = () => {
           )}
         </div>
 
-        {/* 2. DESKTOP TABLE VIEW (>= 768px) */}
-        <div className="hidden md:block overflow-x-auto">
+        {/* 2. DESKTOP TABLE VIEW (>= 1024px) */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -225,7 +217,7 @@ export const EmployeesPage: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                       <span>Loading employee directory...</span>
                     </div>
                   </td>
@@ -241,7 +233,7 @@ export const EmployeesPage: React.FC = () => {
                   <tr key={emp.id} className="hover:bg-slate-50/70 transition">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-indigo-700 font-bold flex items-center justify-center text-xs border border-slate-200">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-bold flex items-center justify-center text-xs border border-blue-100">
                           {emp.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -298,7 +290,7 @@ export const EmployeesPage: React.FC = () => {
                             setIsModalOpen(true);
                           }}
                           title="Edit Employee"
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -339,7 +331,6 @@ export const EmployeesPage: React.FC = () => {
           setEmployeeToEdit(null);
         }}
         employeeToEdit={employeeToEdit}
-        onSuccess={loadUsers}
       />
     </div>
   );

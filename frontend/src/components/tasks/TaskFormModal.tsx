@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { TaskItem, User, TaskCreatePayload, TaskUpdatePayload } from '../../types';
-import { taskService } from '../../services/taskService';
-import { userService } from '../../services/userService';
+import React, { useState, useEffect, useMemo } from 'react';
+import { TaskItem, TaskCreatePayload, TaskUpdatePayload } from '../../types';
+import {
+  useCreateTaskMutation,
+  useEmployeesQuery,
+  useUpdateTaskMutation,
+} from '../../hooks/useQueries';
 import { Modal } from '../common/Modal';
 import { toast } from '../../store/useToastStore';
 
@@ -9,7 +12,7 @@ interface TaskFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   taskToEdit?: TaskItem | null;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
@@ -18,8 +21,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   taskToEdit,
   onSuccess,
 }) => {
-  const [employees, setEmployees] = useState<User[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: employeesData = [] } = useEmployeesQuery(isOpen);
+  const employees = useMemo(() => employeesData.filter((e) => e.isActive), [employeesData]);
+
+  const createTaskMutation = useCreateTaskMutation();
+  const updateTaskMutation = useUpdateTaskMutation();
+  const isSubmitting = createTaskMutation.isPending || updateTaskMutation.isPending;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -35,7 +42,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      loadEmployees();
       if (taskToEdit) {
         setFormData({
           title: taskToEdit.title,
@@ -54,28 +60,29 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           status: 'New',
           startDate: new Date().toISOString().split('T')[0],
           dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-          assignedToUserId: 0,
+          assignedToUserId: employees[0]?.id ?? 0,
         });
       }
       setErrors({});
     }
   }, [isOpen, taskToEdit]);
 
-  const loadEmployees = async () => {
-    try {
-      const data = await userService.getEmployees();
-      setEmployees(data.filter((e) => e.isActive));
-      if (!taskToEdit && data.length > 0 && formData.assignedToUserId === 0) {
-        setFormData((prev) => ({ ...prev, assignedToUserId: data[0].id }));
-      }
-    } catch {
-      toast.error('Failed to load employee list');
+  useEffect(() => {
+    if (isOpen && !taskToEdit && employees.length > 0 && formData.assignedToUserId === 0) {
+      setFormData((prev) => ({ ...prev, assignedToUserId: employees[0].id }));
     }
-  };
+  }, [isOpen, taskToEdit, employees, formData.assignedToUserId]);
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!formData.title.trim()) errs.title = 'Title is required';
+    if (!formData.title.trim()) {
+      errs.title = 'Title is required';
+    } else if (formData.title.trim().length > 200) {
+      errs.title = 'Title cannot exceed 200 characters';
+    }
+    if (formData.description.length > 4000) {
+      errs.description = 'Description cannot exceed 4000 characters';
+    }
     if (!formData.assignedToUserId || formData.assignedToUserId === 0) {
       errs.assignedToUserId = 'Please assign an employee';
     }
@@ -90,7 +97,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     e.preventDefault();
     if (!validate()) return;
 
-    setIsSubmitting(true);
     try {
       if (taskToEdit) {
         const payload: TaskUpdatePayload = {
@@ -103,7 +109,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           dueDate: new Date(formData.dueDate).toISOString(),
           assignedToUserId: Number(formData.assignedToUserId),
         };
-        await taskService.updateTask(taskToEdit.id, payload);
+        await updateTaskMutation.mutateAsync({ id: taskToEdit.id, payload });
         toast.success('Task updated successfully');
       } else {
         const payload: TaskCreatePayload = {
@@ -115,15 +121,13 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           dueDate: new Date(formData.dueDate).toISOString(),
           assignedToUserId: Number(formData.assignedToUserId),
         };
-        await taskService.createTask(payload);
+        await createTaskMutation.mutateAsync(payload);
         toast.success('Task created and assigned successfully');
       }
-      onSuccess();
+      onSuccess?.();
       onClose();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Operation failed');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -146,7 +150,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="e.g. Conduct Security Audit and Vulnerability Scan"
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           />
           {errors.title && <p className="text-[11px] text-rose-500 mt-1">{errors.title}</p>}
         </div>
@@ -159,8 +163,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Detailed description of task objectives and deliverables..."
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           />
+          {errors.description && <p className="text-[11px] text-rose-500 mt-1">{errors.description}</p>}
         </div>
 
         {/* Priority & Status */}
@@ -170,7 +175,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <select
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             >
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
@@ -183,7 +188,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             >
               <option value="New">New</option>
               <option value="In Progress">In Progress</option>
@@ -200,7 +205,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             />
           </div>
 
@@ -212,7 +217,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               type="date"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
             />
             {errors.dueDate && <p className="text-[11px] text-rose-500 mt-1">{errors.dueDate}</p>}
           </div>
@@ -226,7 +231,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <select
             value={formData.assignedToUserId}
             onChange={(e) => setFormData({ ...formData, assignedToUserId: Number(e.target.value) })}
-            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white"
           >
             <option value={0}>-- Select Employee --</option>
             {employees.map((emp) => (
@@ -252,7 +257,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition shadow-xs"
+            className="px-5 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition shadow-xs"
           >
             {isSubmitting ? 'Saving...' : taskToEdit ? 'Save Changes' : 'Create Task'}
           </button>

@@ -42,10 +42,10 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
     >
       <div
-        className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full ${maxWidthClasses} overflow-hidden transform transition-all duration-200`}
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full ${maxWidthClasses} overflow-hidden transform transition-all duration-200`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 max-h-[calc(88vh-90px)] overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 max-h-[85dvh] sm:max-h-[calc(88vh-90px)] overflow-y-auto">{children}</div>
       </div>
     </div>
   );

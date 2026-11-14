@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { toast } from '../store/useToastStore';
-import { 
-  ClipboardList, 
-  Lock, 
-  User as UserIcon, 
-  ArrowRight, 
-  ShieldCheck, 
-  Sparkles,
-  Zap,
-  CheckCircle2
+import {
+  ClipboardList,
+  Lock,
+  User as UserIcon,
+  ArrowRight,
+  ShieldCheck,
+  Briefcase,
+  FlaskConical,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -29,7 +29,7 @@ export const LoginPage: React.FC = () => {
 
     const success = await login({ usernameOrEmail: usernameOrEmail.trim(), password });
     if (success) {
-      toast.success('Welcome back to TaskFlow Pro!');
+      toast.success('Welcome back to TaskFlow Pro');
       navigate('/');
     }
   };
@@ -45,92 +45,107 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-3 sm:p-6 lg:p-8 font-sans overflow-x-hidden relative">
-      {/* Background glowing orbs */}
-      <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden">
-        {/* Left Side: Brand & Quick Demo Roles */}
-        <div className="lg:col-span-5 p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-indigo-900/60 to-slate-900/80 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col justify-between text-white">
+    <div className="min-h-dvh w-full max-w-full bg-slate-50 flex items-center justify-center p-3 sm:p-6 lg:p-8 font-sans overflow-x-hidden">
+      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-w-0">
+        {/* Left Side on Desktop / Below Form on Mobile: Info & Quick Demo Roles */}
+        <div className="order-2 lg:order-1 lg:col-span-5 min-w-0 p-4 sm:p-8 lg:p-10 bg-slate-50/90 border-t lg:border-t-0 lg:border-r border-slate-200 flex flex-col justify-between text-slate-700">
           <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-glow-primary">
+            <div className="hidden lg:flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0">
                 <ClipboardList className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight">TaskFlow Pro</h1>
-                <p className="text-xs text-indigo-300 font-medium">Enterprise Task Management</p>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">TaskFlow Pro</h1>
+                <p className="text-xs text-slate-500 font-medium">Enterprise Task Management</p>
               </div>
             </div>
 
-            <p className="text-sm text-slate-300 leading-relaxed mb-6">
-              Production-ready task tracking, role-based workflows, dynamic analytics, and collaborative team communication.
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5 lg:mb-6">
+              Role-based operational task tracking, immutable change auditing, and real-time team notifications.
             </p>
 
-            <div className="space-y-3 mb-8">
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>JWT Authentication & Dual-Role RBAC</span>
+            <div className="space-y-2.5 lg:space-y-3 mb-6 lg:mb-8">
+              <div className="flex items-center gap-2.5 text-xs text-slate-600">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>HttpOnly Cookie &amp; CSRF Session Security</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Dynamic Repository & Unit of Work (.NET 10)</span>
+              <div className="flex items-center gap-2.5 text-xs text-slate-600">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Append-Only Task History &amp; Audit Trail</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>React 19 & Zustand State Engine</span>
+              <div className="flex items-center gap-2.5 text-xs text-slate-600">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Live Activity &amp; Correlated Request Tracing</span>
               </div>
             </div>
           </div>
 
           {/* Quick Demo Logins Box */}
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-3">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>1-Click Evaluator Fast Login</span>
+          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 mb-3">
+              <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>Quick Demo Access</span>
             </div>
             <div className="grid grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('admin', 'Admin@123', 'System Administrator (Admin)')}
                 disabled={isLoading}
-                className="w-full py-2 px-3 rounded-xl bg-indigo-600/40 hover:bg-indigo-600/70 border border-indigo-400/30 text-left text-xs font-medium text-white transition flex items-center justify-between group"
+                className="w-full min-w-0 py-2.5 px-3 rounded-lg bg-blue-50 hover:bg-blue-100/80 border border-blue-200 text-left text-xs font-medium text-blue-950 transition flex items-center justify-between gap-2 disabled:opacity-50"
               >
-                <span>👑 Admin (Sarah Jenkins)</span>
-                <span className="text-[10px] text-indigo-200 group-hover:translate-x-0.5 transition">Click to log in &rarr;</span>
+                <span className="inline-flex items-center gap-2 min-w-0 truncate">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate">Admin (Sarah Jenkins)</span>
+                </span>
+                <span className="text-[11px] font-semibold text-blue-600 shrink-0">Sign in &rarr;</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickLogin('john.doe', 'Employee@123', 'John Doe (Employee)')}
                 disabled={isLoading}
-                className="w-full py-2 px-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/60 border border-emerald-400/30 text-left text-xs font-medium text-white transition flex items-center justify-between group"
+                className="w-full py-2.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-800 transition flex items-center justify-between gap-2 disabled:opacity-50"
               >
-                <span>💼 Employee (John Doe - Dev)</span>
-                <span className="text-[10px] text-emerald-200 group-hover:translate-x-0.5 transition">Click to log in &rarr;</span>
+                <span className="inline-flex items-center gap-2 min-w-0 truncate">
+                  <Briefcase className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">Employee (John Doe - Dev)</span>
+                </span>
+                <span className="text-[11px] text-slate-500 shrink-0">Sign in &rarr;</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickLogin('jane.smith', 'Employee@123', 'Jane Smith (Employee)')}
                 disabled={isLoading}
-                className="w-full py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/60 border border-purple-400/30 text-left text-xs font-medium text-white transition flex items-center justify-between group"
+                className="w-full py-2.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-800 transition flex items-center justify-between gap-2 disabled:opacity-50"
               >
-                <span>🧪 Employee (Jane Smith - QA)</span>
-                <span className="text-[10px] text-purple-200 group-hover:translate-x-0.5 transition">Click to log in &rarr;</span>
+                <span className="inline-flex items-center gap-2 min-w-0 truncate">
+                  <FlaskConical className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="truncate">Employee (Jane Smith - QA)</span>
+                </span>
+                <span className="text-[11px] text-slate-500 shrink-0">Sign in &rarr;</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Sign-In Form */}
-        <div className="lg:col-span-7 p-5 sm:p-8 lg:p-10 bg-white flex flex-col justify-center">
-          <div className="max-w-md mx-auto w-full">
+        {/* Right Side on Desktop / First on Mobile: Sign-In Form */}
+        <div className="order-1 lg:order-2 lg:col-span-7 min-w-0 p-4 sm:p-8 lg:p-10 bg-white flex flex-col justify-center">
+          <div className="max-w-md mx-auto w-full min-w-0">
+            <div className="flex lg:hidden items-center gap-3 pb-5 mb-5 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight text-slate-900">TaskFlow Pro</h1>
+                <p className="text-[11px] text-slate-500 font-medium">Enterprise Task Management</p>
+              </div>
+            </div>
+
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Sign in to your account</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sign in to your account</h2>
               <p className="text-xs text-slate-500 mt-1">
-                Enter your credentials or use the demo buttons on the left
+                Enter your credentials or select a demo account below
               </p>
             </div>
 
@@ -156,7 +171,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setUsernameOrEmail(e.target.value)}
                     placeholder="admin or user@taskflow.com"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-hidden bg-slate-50/50 focus:bg-white transition"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:outline-hidden bg-slate-50/50 focus:bg-white transition"
                   />
                 </div>
               </div>
@@ -175,7 +190,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-hidden bg-slate-50/50 focus:bg-white transition"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm sm:text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:outline-hidden bg-slate-50/50 focus:bg-white transition"
                   />
                 </div>
               </div>
@@ -183,7 +198,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs tracking-wide shadow-md shadow-indigo-600/20 disabled:opacity-50 transition flex items-center justify-center gap-2"
+                className="w-full mt-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm sm:text-xs tracking-wide disabled:opacity-50 transition flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
